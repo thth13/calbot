@@ -28,7 +28,11 @@ Return ONLY a JSON object with these exact fields:
 }
 Use confidence "low" if image is blurry or food is hard to identify, "high" if clearly visible standard dishes.`;
 
-export async function analyzeFood(imageUrl: string): Promise<NutritionResult> {
+export async function analyzeFood(imageUrl: string, details?: string): Promise<NutritionResult> {
+  const userText = details
+    ? `${USER_PROMPT}\n\nAdditional details from user: ${details}`
+    : USER_PROMPT;
+
   const response = await client.chat.completions.create({
     model: 'gpt-4o',
     max_tokens: 500,
@@ -37,7 +41,7 @@ export async function analyzeFood(imageUrl: string): Promise<NutritionResult> {
       {
         role: 'user',
         content: [
-          { type: 'text', text: USER_PROMPT },
+          { type: 'text', text: userText },
           { type: 'image_url', image_url: { url: imageUrl, detail: 'low' } },
         ],
       },

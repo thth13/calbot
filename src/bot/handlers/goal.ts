@@ -187,7 +187,7 @@ export async function handleActivityCallback(ctx: Context, activity: ActivityLev
 
   const state = wizardState.get(telegramId);
   if (!state || !state.gender || !state.age || !state.height || !state.weight) {
-    await ctx.reply('❌ Что-то пошло не так. Начни заново — нажми 🎯 Норма.');
+    await ctx.reply('❌ Что-то пошло не так. Начни заново — нажми 👤 Мой профиль.');
     wizardState.delete(telegramId);
     return;
   }

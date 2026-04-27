@@ -1,4 +1,4 @@
-import { Context } from 'grammy';
+import { Context, InlineKeyboard } from 'grammy';
 import { analyzeFood } from '../../services/vision.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
@@ -9,26 +9,21 @@ const CONFIDENCE_EMOJI: Record<string, string> = {
   low: '❓',
 };
 
-export async function handlePhoto(ctx: Context): Promise<void> {
-  const tgUser = ctx.from;
-  if (!tgUser) return;
+interface PendingPhoto {
+  fileId: string;
+  imageUrl: string;
+}
 
-  const photos = ctx.message?.photo;
-  if (!photos || photos.length === 0) return;
+export const pendingPhotoState = new Map<number, PendingPhoto>();
+
+async function processPhoto(ctx: Context, imageUrl: string, fileId: string, details?: string): Promise<void> {
+  const tgUser = ctx.from!;
 
   const waitMsg = await ctx.reply('🔍 Анализирую блюдо...');
 
   try {
-    // Берём самое высокое качество (последнее в массиве)
-    const bestPhoto = photos[photos.length - 1];
-    const file = await ctx.api.getFile(bestPhoto.file_id);
+    const nutrition = await analyzeFood(imageUrl, details);
 
-    if (!file.file_path) throw new Error('Не удалось получить файл');
-
-    const imageUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
-    const nutrition = await analyzeFood(imageUrl);
-
-    // Upsert пользователя и получаем его _id
     const user = await User.findOneAndUpdate(
       { telegramId: tgUser.id },
       { telegramId: tgUser.id, username: tgUser.username, firstName: tgUser.first_name },
@@ -44,10 +39,9 @@ export async function handlePhoto(ctx: Context): Promise<void> {
       carbs: nutrition.carbs,
       fat: nutrition.fat,
       confidence: nutrition.confidence,
-      photoFileId: bestPhoto.file_id,
+      photoFileId: fileId,
     });
 
-    // Считаем итого за сегодня
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -58,7 +52,6 @@ export async function handlePhoto(ctx: Context): Promise<void> {
 
     const todayTotal = todayEntries.reduce((sum, e) => sum + e.calories, 0);
     const remaining = (user.dailyCalorieGoal || 2000) - todayTotal;
-
     const confidenceLabel = CONFIDENCE_EMOJI[nutrition.confidence] ?? '⚠️';
 
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id);
@@ -76,8 +69,76 @@ export async function handlePhoto(ctx: Context): Promise<void> {
     );
   } catch (err) {
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id).catch(() => null);
-
     console.error('Photo handler error:', err);
     await ctx.reply('❌ Не удалось распознать блюдо. Попробуй сделать более чёткое фото.');
   }
 }
+
+export async function handlePhoto(ctx: Context): Promise<void> {
+  const tgUser = ctx.from;
+  if (!tgUser) return;
+
+  const photos = ctx.message?.photo;
+  if (!photos || photos.length === 0) return;
+
+  const bestPhoto = photos[photos.length - 1];
+  const file = await ctx.api.getFile(bestPhoto.file_id);
+
+  if (!file.file_path) {
+    await ctx.reply('❌ Не удалось получить файл. Попробуй ещё раз.');
+    return;
+  }
+
+  const imageUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+
+  // Если фото пришло с подписью — сразу анализируем
+  const caption = ctx.message?.caption?.trim();
+  if (caption) {
+    await processPhoto(ctx, imageUrl, bestPhoto.file_id, caption);
+    return;
+  }
+
+  // Иначе — спрашиваем детали
+  pendingPhotoState.set(tgUser.id, { fileId: bestPhoto.file_id, imageUrl });
+
+  const keyboard = new InlineKeyboard().text('Пропустить →', 'photo_skip');
+
+  await ctx.reply(
+    '📝 Есть детали приготовления?\n\n' +
+      'Напиши, например: _жарилось на сливочном масле_, _политo соусом тар-тар_, _с сыром сверху_ — это повысит точность расчёта.\n\n' +
+      'Или нажми «Пропустить», если деталей нет.',
+    { parse_mode: 'Markdown', reply_markup: keyboard }
+  );
+}
+
+export async function handlePhotoDetails(ctx: Context): Promise<boolean> {
+  const tgUser = ctx.from;
+  if (!tgUser) return false;
+
+  const pending = pendingPhotoState.get(tgUser.id);
+  if (!pending) return false;
+
+  pendingPhotoState.delete(tgUser.id);
+
+  const details = ctx.message?.text?.trim();
+  await processPhoto(ctx, pending.imageUrl, pending.fileId, details);
+  return true;
+}
+
+export async function handlePhotoSkip(ctx: Context): Promise<void> {
+  const tgUser = ctx.from;
+  if (!tgUser) return;
+
+  const pending = pendingPhotoState.get(tgUser.id);
+  if (!pending) {
+    await ctx.answerCallbackQuery();
+    return;
+  }
+
+  pendingPhotoState.delete(tgUser.id);
+  await ctx.answerCallbackQuery();
+  await ctx.editMessageReplyMarkup({ reply_markup: undefined });
+
+  await processPhoto(ctx, pending.imageUrl, pending.fileId);
+}
+

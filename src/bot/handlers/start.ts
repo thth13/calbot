@@ -5,7 +5,7 @@ import { User } from '../../db/models/User.js';
 export const mainKeyboard = new Keyboard()
   .text('📅 Сегодня').text('📊 Неделя')
   .row()
-  .text('📋 История').text('🎯 Норма')
+  .text('📋 История').text('👤 Мой профиль')
   .resized();
 
 export async function handleStart(ctx: Context): Promise<void> {
