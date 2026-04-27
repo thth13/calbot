@@ -1,5 +1,12 @@
 import { Context } from 'grammy';
-import { User } from '../db/models/User.js';
+import { Keyboard } from 'grammy';
+import { User } from '../../db/models/User.js';
+
+export const mainKeyboard = new Keyboard()
+  .text('📅 Сегодня').text('📊 Неделя')
+  .row()
+  .text('📋 История').text('🎯 Норма')
+  .resized();
 
 export async function handleStart(ctx: Context): Promise<void> {
   const tgUser = ctx.from;
@@ -18,13 +25,8 @@ export async function handleStart(ctx: Context): Promise<void> {
   await ctx.reply(
     `👋 Привет, ${tgUser.first_name}!\n\n` +
       `Я считаю калории по фото еды.\n\n` +
-      `📸 *Как пользоваться:*\n` +
-      `Просто отправь фото тарелки — я определю блюдо и подсчитаю КБЖУ.\n\n` +
-      `📊 *Команды:*\n` +
-      `/today — сводка за сегодня\n` +
-      `/week — статистика за неделю\n` +
-      `/history — последние 10 записей\n` +
-      `/goal — установить дневную норму калорий`,
-    { parse_mode: 'Markdown' }
+      `📸 Просто отправь фото тарелки — я определю блюдо и подсчитаю КБЖУ.\n\n` +
+      `Используй кнопки ниже для просмотра статистики.`,
+    { parse_mode: 'Markdown', reply_markup: mainKeyboard }
   );
 }
