@@ -47,7 +47,8 @@ export async function analyzeFood(imageUrl: string): Promise<NutritionResult> {
   const content = response.choices[0]?.message?.content;
   if (!content) throw new Error('Empty response from OpenAI');
 
-  const parsed = JSON.parse(content) as NutritionResult;
+  const jsonString = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+  const parsed = JSON.parse(jsonString) as NutritionResult;
 
   // Базовая валидация
   if (
