@@ -35,7 +35,7 @@ export async function handleToday(ctx: Context): Promise<void> {
     return;
   }
 
-  const goal = user?.dailyCalorieGoal ?? 2000;
+  const goal = user?.dailyCalorieGoal;
   const totals = entries.reduce(
     (acc, e) => ({
       calories: acc.calories + e.calories,
@@ -47,13 +47,15 @@ export async function handleToday(ctx: Context): Promise<void> {
   );
 
   const lines = entries.map(formatEntry).join('\n');
+  const goalLine = goal
+    ? `🔥 Калории: *${totals.calories}* / ${goal} ккал\n${buildSummaryLine(totals.calories, goal)}`
+    : `🔥 Калории: *${totals.calories}* ккал _(норма не задана)_`;
 
   await ctx.reply(
     `📅 *Сегодня, ${new Date().toLocaleDateString('ru-RU')}*\n\n` +
       `${lines}\n\n` +
       `─────────────────\n` +
-      `🔥 Калории: *${totals.calories}* / ${goal} ккал\n` +
-      `${buildSummaryLine(totals.calories, goal)}\n\n` +
+      `${goalLine}\n\n` +
       `🥩 Белки: ${totals.protein}г  |  🍞 Углеводы: ${totals.carbs}г  |  🧈 Жиры: ${totals.fat}г`,
     { parse_mode: 'Markdown' }
   );
@@ -77,7 +79,7 @@ export async function handleWeek(ctx: Context): Promise<void> {
     return;
   }
 
-  const goal = user?.dailyCalorieGoal ?? 2000;
+  const goal = user?.dailyCalorieGoal;
 
   // Группируем по дням
   const byDay = new Map<string, { calories: number; protein: number; carbs: number; fat: number; count: number }>();
@@ -96,7 +98,9 @@ export async function handleWeek(ctx: Context): Promise<void> {
 
   const dayLines = Array.from(byDay.entries())
     .map(([date, d]) => {
-      const icon = d.calories > goal ? '🔴' : d.calories > goal * 0.8 ? '🟡' : '🟢';
+      const icon = goal
+        ? d.calories > goal ? '🔴' : d.calories > goal * 0.8 ? '🟡' : '🟢'
+        : '⚪';
       return `${icon} ${date}: *${d.calories}* ккал (${d.count} приёма)`;
     })
     .join('\n');
@@ -113,8 +117,8 @@ export async function handleWeek(ctx: Context): Promise<void> {
       `─────────────────\n` +
       `📈 Среднее/день: *${Math.round(totalCalories / days)}* ккал\n` +
       `🔥 Всего: ${totalCalories} ккал\n` +
-      `🥩 Белки: ${totalProtein}г  |  🍞 Углеводы: ${totalCarbs}г  |  🧈 Жиры: ${totalFat}г\n\n` +
-      `🟢 < 80% нормы  🟡 80–100%  🔴 > нормы`,
+      `🥩 Белки: ${totalProtein}г  |  🍞 Углеводы: ${totalCarbs}г  |  🧈 Жиры: ${totalFat}г` +
+      (goal ? `\n\n🟢 < 80% нормы  🟡 80–100%  🔴 > нормы` : ''),
     { parse_mode: 'Markdown' }
   );
 }
@@ -143,26 +147,4 @@ export async function handleHistory(ctx: Context): Promise<void> {
     .join('\n\n');
 
   await ctx.reply(`📋 *Последние ${entries.length} записей:*\n\n${lines}`, { parse_mode: 'Markdown' });
-}
-
-export async function handleGoal(ctx: Context): Promise<void> {
-  const telegramId = ctx.from?.id;
-  if (!telegramId) return;
-
-  const text = ctx.message?.text ?? '';
-  const parts = text.trim().split(/\s+/);
-  const value = parseInt(parts[1] ?? '', 10);
-
-  if (isNaN(value) || value < 500 || value > 10000) {
-    const user = await User.findOne({ telegramId });
-    await ctx.reply(
-      `🎯 Текущая дневная норма: *${user?.dailyCalorieGoal ?? 2000} ккал*\n\n` +
-        `Чтобы изменить, используй:\n/goal 1800`,
-      { parse_mode: 'Markdown' }
-    );
-    return;
-  }
-
-  await User.findOneAndUpdate({ telegramId }, { dailyCalorieGoal: value }, { upsert: true });
-  await ctx.reply(`✅ Дневная норма установлена: *${value} ккал*`, { parse_mode: 'Markdown' });
 }
