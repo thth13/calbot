@@ -7,6 +7,7 @@ export interface NutritionResult {
   carbs: number;
   fat: number;
   confidence: 'low' | 'medium' | 'high';
+  tokensUsed: number;
 }
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -51,6 +52,8 @@ export async function analyzeFood(imageUrl: string, details?: string): Promise<N
   const content = response.choices[0]?.message?.content;
   if (!content) throw new Error('Empty response from OpenAI');
 
+  const tokensUsed = response.usage?.total_tokens ?? 0;
+
   const jsonString = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
   const parsed = JSON.parse(jsonString) as NutritionResult;
 
@@ -65,5 +68,5 @@ export async function analyzeFood(imageUrl: string, details?: string): Promise<N
     throw new Error('Invalid nutrition data from OpenAI');
   }
 
-  return parsed;
+  return { ...parsed, tokensUsed };
 }

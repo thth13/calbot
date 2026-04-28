@@ -16,19 +16,42 @@ interface PendingPhoto {
 
 export const pendingPhotoState = new Map<number, PendingPhoto>();
 
+const DAILY_TOKEN_LIMIT = 30_000;
+
 async function processPhoto(ctx: Context, imageUrl: string, fileId: string, details?: string): Promise<void> {
   const tgUser = ctx.from!;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const user = await User.findOneAndUpdate(
+    { telegramId: tgUser.id },
+    { telegramId: tgUser.id, username: tgUser.username, firstName: tgUser.first_name },
+    { upsert: true, new: true }
+  );
+
+  // Сбрасываем счётчик если новый день
+  const resetDate = new Date(user.tokensResetDate);
+  resetDate.setHours(0, 0, 0, 0);
+  if (resetDate < today) {
+    user.dailyTokensUsed = 0;
+    user.tokensResetDate = today;
+    await user.save();
+  }
+
+  if (user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
+    await ctx.reply('⛔ Ты достиг лимита использования токенов на сегодня. Лимиты обновятся завтра.');
+    return;
+  }
 
   const waitMsg = await ctx.reply('🔍 Анализирую блюдо...');
 
   try {
     const nutrition = await analyzeFood(imageUrl, details);
 
-    const user = await User.findOneAndUpdate(
-      { telegramId: tgUser.id },
-      { telegramId: tgUser.id, username: tgUser.username, firstName: tgUser.first_name },
-      { upsert: true, new: true }
-    );
+    user.dailyTokensUsed += nutrition.tokensUsed;
+    user.tokensResetDate = today;
+    await user.save();
 
     await FoodEntry.create({
       userId: user._id,

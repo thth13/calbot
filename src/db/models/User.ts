@@ -13,6 +13,8 @@ export interface IUser extends Document {
   age?: number;
   gender?: Gender;
   activityLevel?: ActivityLevel;
+  dailyTokensUsed: number;
+  tokensResetDate: Date;
   createdAt: Date;
 }
 
@@ -27,6 +29,8 @@ const UserSchema = new Schema<IUser>(
     age: { type: Number },
     gender: { type: String, enum: ['male', 'female'] },
     activityLevel: { type: String, enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'] },
+    dailyTokensUsed: { type: Number, default: 0 },
+    tokensResetDate: { type: Date, default: () => new Date() },
   },
   { timestamps: true }
 );
