@@ -11,6 +11,14 @@ import {
   handleWizardMessage,
   wizardState,
 } from './handlers/goal.js';
+import {
+  handleDeleteEntry,
+  handleEditEntryStart,
+  handleSelectEditField,
+  handleEditFieldValue,
+  handleCancelEdit,
+  editingState,
+} from './handlers/manage.js';
 
 export function createBot(token: string) {
   const bot = new Bot(token);
@@ -36,10 +44,20 @@ export function createBot(token: string) {
   bot.callbackQuery('activity_active', (ctx) => handleActivityCallback(ctx, 'active'));
   bot.callbackQuery('activity_very_active', (ctx) => handleActivityCallback(ctx, 'very_active'));
 
-  // Route text messages: wizard and pending photo take priority
+  // Edit/delete entry callbacks
+  bot.callbackQuery(/^edit_entry_(.+)$/, handleEditEntryStart);
+  bot.callbackQuery(/^delete_entry_(.+)$/, handleDeleteEntry);
+  bot.callbackQuery(/^edit_field_.+_(calories|protein|carbs|fat)$/, handleSelectEditField);
+  bot.callbackQuery(/^cancel_edit_(.+)$/, handleCancelEdit);
+
+  // Route text messages: editing state takes priority, then wizard and pending photo
   bot.on('message:text', async (ctx, next) => {
     const telegramId = ctx.from?.id;
     if (telegramId) {
+      if (editingState.has(telegramId)) {
+        const handled = await handleEditFieldValue(ctx);
+        if (handled) return;
+      }
       if (await handlePhotoDetails(ctx)) return;
       if (wizardState.has(telegramId)) {
         const handled = await handleWizardMessage(ctx);

@@ -1,4 +1,4 @@
-import { Context } from 'grammy';
+import { Context, InlineKeyboard } from 'grammy';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
 
@@ -59,6 +59,15 @@ export async function handleToday(ctx: Context): Promise<void> {
       `🥩 Белки: ${totals.protein}г  |  🍞 Углеводы: ${totals.carbs}г  |  🧈 Жиры: ${totals.fat}г`,
     { parse_mode: 'Markdown' }
   );
+
+  // Показываем кнопки редактирования для каждой записи
+  for (const entry of entries) {
+    const keyboard = new InlineKeyboard()
+      .text('✏️ Редактировать', `edit_entry_${entry._id}`)
+      .text('🗑 Удалить', `delete_entry_${entry._id}`);
+
+    await ctx.reply(`${entry.foodDescription} — ${entry.calories} ккал`, { reply_markup: keyboard });
+  }
 }
 
 export async function handleWeek(ctx: Context): Promise<void> {
@@ -134,17 +143,24 @@ export async function handleHistory(ctx: Context): Promise<void> {
     return;
   }
 
-  const lines = entries
-    .map((e) => {
-      const dt = e.createdAt.toLocaleString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      return `• ${dt} — ${e.foodDescription}\n  🔥 ${e.calories} ккал  |  🥩${e.protein}г  🍞${e.carbs}г  🧈${e.fat}г`;
-    })
-    .join('\n\n');
+  await ctx.reply(`📋 *Последние ${entries.length} записей:*`, { parse_mode: 'Markdown' });
 
-  await ctx.reply(`📋 *Последние ${entries.length} записей:*\n\n${lines}`, { parse_mode: 'Markdown' });
+  for (const e of entries) {
+    const dt = e.createdAt.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const keyboard = new InlineKeyboard()
+      .text('✏️ Редактировать', `edit_entry_${e._id}`)
+      .text('🗑 Удалить', `delete_entry_${e._id}`);
+
+    const text =
+      `${dt} — *${e.foodDescription}*\n` +
+      `🔥 ${e.calories} ккал  |  🥩 ${e.protein}г  |  🍞 ${e.carbs}г  |  🧈 ${e.fat}г`;
+
+    await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
+  }
 }
