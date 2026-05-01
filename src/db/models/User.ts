@@ -7,6 +7,8 @@ export interface IUser extends Document {
   telegramId: number;
   username?: string;
   firstName?: string;
+  premiumUntil?: Date;
+  premiumPlan?: 'monthly' | 'yearly';
   dailyCalorieGoal: number;
   weight?: number;
   height?: number;
@@ -23,6 +25,8 @@ const UserSchema = new Schema<IUser>(
     telegramId: { type: Number, required: true, unique: true, index: true },
     username: { type: String },
     firstName: { type: String },
+    premiumUntil: { type: Date },
+    premiumPlan: { type: String, enum: ['monthly', 'yearly'] },
     dailyCalorieGoal: { type: Number },
     weight: { type: Number },
     height: { type: Number },

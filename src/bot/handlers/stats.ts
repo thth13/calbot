@@ -1,6 +1,7 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
+import { buildPremiumKeyboard, isPremiumActive } from './premium.js';
 
 function formatEntry(entry: { foodDescription: string; calories: number; createdAt: Date }): string {
   const time = entry.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -163,4 +164,74 @@ export async function handleHistory(ctx: Context): Promise<void> {
 
     await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
   }
+}
+
+export async function handleExtendedStats(ctx: Context): Promise<void> {
+  const telegramId = ctx.from?.id;
+  if (!telegramId) return;
+
+  const user = await User.findOne({ telegramId });
+  if (!isPremiumActive(user?.premiumUntil)) {
+    await ctx.reply(
+      `📈 *Расширенная статистика доступна в Premium*\n\n` +
+        `Premium открывает 30-дневную динамику, средние КБЖУ и анализ дней относительно цели.`,
+      { parse_mode: 'Markdown', reply_markup: buildPremiumKeyboard(ctx) }
+    );
+    return;
+  }
+
+  const start = new Date();
+  start.setDate(start.getDate() - 29);
+  start.setHours(0, 0, 0, 0);
+
+  const entries = await FoodEntry.find({ telegramId, createdAt: { $gte: start } }).sort({ createdAt: 1 });
+
+  if (entries.length === 0) {
+    await ctx.reply('📭 За последние 30 дней записей нет.');
+    return;
+  }
+
+  const byDay = new Map<string, { calories: number; protein: number; carbs: number; fat: number; count: number }>();
+
+  for (const entry of entries) {
+    const day = entry.createdAt.toLocaleDateString('ru-RU');
+    const current = byDay.get(day) ?? { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
+    byDay.set(day, {
+      calories: current.calories + entry.calories,
+      protein: current.protein + entry.protein,
+      carbs: current.carbs + entry.carbs,
+      fat: current.fat + entry.fat,
+      count: current.count + 1,
+    });
+  }
+
+  const totals = Array.from(byDay.values()).reduce(
+    (acc, day) => ({
+      calories: acc.calories + day.calories,
+      protein: acc.protein + day.protein,
+      carbs: acc.carbs + day.carbs,
+      fat: acc.fat + day.fat,
+      count: acc.count + day.count,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 }
+  );
+
+  const days = byDay.size;
+  const goal = user?.dailyCalorieGoal;
+  const goalHits = goal
+    ? Array.from(byDay.values()).filter((day) => day.calories >= goal * 0.9 && day.calories <= goal * 1.1).length
+    : 0;
+  const bestDay = Array.from(byDay.entries()).sort((a, b) => b[1].calories - a[1].calories)[0];
+
+  await ctx.reply(
+    `📈 *Расширенная статистика за 30 дней*\n\n` +
+      `Дней с записями: *${days}*\n` +
+      `Приёмов пищи: *${totals.count}*\n\n` +
+      `Среднее в день:\n` +
+      `🔥 ${Math.round(totals.calories / days)} ккал\n` +
+      `🥩 ${Math.round(totals.protein / days)}г  |  🍞 ${Math.round(totals.carbs / days)}г  |  🧈 ${Math.round(totals.fat / days)}г\n\n` +
+      (goal ? `Дней около цели: *${goalHits}* из ${days}\n` : `Цель по калориям не задана\n`) +
+      `Самый калорийный день: *${bestDay[0]}* — ${bestDay[1].calories} ккал`,
+    { parse_mode: 'Markdown' }
+  );
 }

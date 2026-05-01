@@ -1,7 +1,8 @@
 import { Context, InlineKeyboard } from 'grammy';
-import { analyzeFood } from '../../services/vision.js';
+import { analyzeFood, analyzeFoodDescription, NutritionResult } from '../../services/vision.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
+import { isPremiumActive } from './premium.js';
 
 const CONFIDENCE_EMOJI: Record<string, string> = {
   high: '✅',
@@ -18,7 +19,15 @@ export const pendingPhotoState = new Map<number, PendingPhoto>();
 
 const DAILY_TOKEN_LIMIT = 30_000;
 
-async function processPhoto(ctx: Context, imageUrl: string, fileId: string, details?: string): Promise<void> {
+async function processMeal(
+  ctx: Context,
+  analyze: () => Promise<NutritionResult>,
+  options: {
+    photoFileId?: string;
+    waitText: string;
+    failureText: string;
+  }
+): Promise<void> {
   const tgUser = ctx.from!;
 
   const today = new Date();
@@ -39,17 +48,22 @@ async function processPhoto(ctx: Context, imageUrl: string, fileId: string, deta
     await user.save();
   }
 
-  if (user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
-    await ctx.reply('⛔ Ты достиг лимита использования токенов на сегодня. Лимиты обновятся завтра.');
+  if (!isPremiumActive(user.premiumUntil) && user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
+    await ctx.reply(
+      '⛔ Ты достиг лимита сканирований на сегодня. Лимиты обновятся завтра.\n\n' +
+        '💎 Premium снимает дневной лимит и открывает расширенную статистику.'
+    );
     return;
   }
 
-  const waitMsg = await ctx.reply('🔍 Анализирую блюдо...');
+  const waitMsg = await ctx.reply(options.waitText);
 
   try {
-    const nutrition = await analyzeFood(imageUrl, details);
+    const nutrition = await analyze();
 
-    user.dailyTokensUsed += nutrition.tokensUsed;
+    if (!isPremiumActive(user.premiumUntil)) {
+      user.dailyTokensUsed += nutrition.tokensUsed;
+    }
     user.tokensResetDate = today;
     await user.save();
 
@@ -62,7 +76,7 @@ async function processPhoto(ctx: Context, imageUrl: string, fileId: string, deta
       carbs: nutrition.carbs,
       fat: nutrition.fat,
       confidence: nutrition.confidence,
-      photoFileId: fileId,
+      photoFileId: options.photoFileId,
     });
 
     const todayStart = new Date();
@@ -92,9 +106,27 @@ async function processPhoto(ctx: Context, imageUrl: string, fileId: string, deta
     );
   } catch (err) {
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id).catch(() => null);
-    console.error('Photo handler error:', err);
-    await ctx.reply('❌ Не удалось распознать блюдо. Попробуй сделать более чёткое фото.');
+    console.error('Meal handler error:', err);
+    await ctx.reply(options.failureText);
   }
+}
+
+async function processPhoto(ctx: Context, imageUrl: string, fileId: string, details?: string): Promise<void> {
+  await processMeal(ctx, () => analyzeFood(imageUrl, details), {
+    photoFileId: fileId,
+    waitText: '🔍 Анализирую блюдо...',
+    failureText: '❌ Не удалось распознать блюдо. Попробуй сделать более чёткое фото.',
+  });
+}
+
+export async function handleFoodDescription(ctx: Context): Promise<void> {
+  const description = ctx.message?.text?.trim();
+  if (!ctx.from || !description) return;
+
+  await processMeal(ctx, () => analyzeFoodDescription(description), {
+    waitText: '🔍 Считаю КБЖУ по описанию...',
+    failureText: '❌ Не удалось посчитать КБЖУ по описанию. Попробуй указать продукты и примерный размер порции.',
+  });
 }
 
 export async function handlePhoto(ctx: Context): Promise<void> {
@@ -164,4 +196,3 @@ export async function handlePhotoSkip(ctx: Context): Promise<void> {
 
   await processPhoto(ctx, pending.imageUrl, pending.fileId);
 }
-

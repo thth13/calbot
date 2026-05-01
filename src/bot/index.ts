@@ -1,7 +1,8 @@
 import { Bot } from 'grammy';
 import { handleStart, mainKeyboard } from './handlers/start.js';
-import { handlePhoto, handlePhotoDetails, handlePhotoSkip } from './handlers/photo.js';
-import { handleToday, handleWeek, handleHistory } from './handlers/stats.js';
+import { handleFoodDescription, handlePhoto, handlePhotoDetails, handlePhotoSkip } from './handlers/photo.js';
+import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
+import { handlePremium } from './handlers/premium.js';
 import {
   handleGoal,
   handleGoalCalcCallback,
@@ -27,11 +28,15 @@ export function createBot(token: string) {
   bot.command('today', handleToday);
   bot.command('week', handleWeek);
   bot.command('history', handleHistory);
+  bot.command('premium', handlePremium);
+  bot.command('extended', handleExtendedStats);
 
   bot.hears('📅 Сегодня', handleToday);
   bot.hears('📊 Неделя', handleWeek);
   bot.hears('📋 История', handleHistory);
+  bot.hears('📈 Расширенная', handleExtendedStats);
   bot.hears('👤 Мой профиль', handleGoal);
+  bot.hears('💎 Premium', handlePremium);
 
   // Wizard callbacks
   bot.callbackQuery('goal_calc', handleGoalCalcCallback);
@@ -64,7 +69,9 @@ export function createBot(token: string) {
         if (handled) return;
       }
     }
-    return next();
+    if (ctx.message.text.startsWith('/')) return next();
+
+    await handleFoodDescription(ctx);
   });
 
   bot.callbackQuery('photo_skip', handlePhotoSkip);

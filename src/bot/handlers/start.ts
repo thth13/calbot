@@ -5,7 +5,9 @@ import { User } from '../../db/models/User.js';
 export const mainKeyboard = new Keyboard()
   .text('📅 Сегодня').text('📊 Неделя')
   .row()
-  .text('📋 История').text('👤 Мой профиль')
+  .text('📋 История').text('📈 Расширенная')
+  .row()
+  .text('👤 Мой профиль').text('💎 Premium')
   .resized();
 
 export async function handleStart(ctx: Context): Promise<void> {
@@ -24,9 +26,10 @@ export async function handleStart(ctx: Context): Promise<void> {
 
   await ctx.reply(
     `👋 Привет, ${tgUser.first_name}!\n\n` +
-      `Я считаю калории по фото еды.\n\n` +
-      `📸 Просто отправь фото тарелки — я определю блюдо и подсчитаю КБЖУ.\n\n` +
-      `Используй кнопки ниже для просмотра статистики.`,
+      `Я считаю калории по фото еды или описанию тарелки.\n\n` +
+      `📸 Отправь фото тарелки — я определю блюдо и подсчитаю КБЖУ.\n` +
+      `📝 Или просто напиши, что было на тарелке, если фото нет.\n\n` +
+      `Используй кнопки ниже для просмотра статистики и профиля.`,
     { parse_mode: 'Markdown', reply_markup: mainKeyboard }
   );
 }
