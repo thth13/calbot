@@ -7,6 +7,9 @@ import {
   handleGoal,
   handleGoalCalcCallback,
   handleGoalManualCallback,
+  handleManualGoalCancelCallback,
+  handleManualGoalFieldCallback,
+  handleManualGoalSaveCallback,
   handleGenderCallback,
   handleActivityCallback,
   handleWizardMessage,
@@ -41,6 +44,9 @@ export function createBot(token: string) {
   // Wizard callbacks
   bot.callbackQuery('goal_calc', handleGoalCalcCallback);
   bot.callbackQuery('goal_manual', handleGoalManualCallback);
+  bot.callbackQuery(/^manual_goal_(calories|protein|carbs|fat)$/, handleManualGoalFieldCallback);
+  bot.callbackQuery('manual_goal_save', handleManualGoalSaveCallback);
+  bot.callbackQuery('manual_goal_cancel', handleManualGoalCancelCallback);
   bot.callbackQuery('gender_male', (ctx) => handleGenderCallback(ctx, 'male'));
   bot.callbackQuery('gender_female', (ctx) => handleGenderCallback(ctx, 'female'));
   bot.callbackQuery('activity_sedentary', (ctx) => handleActivityCallback(ctx, 'sedentary'));

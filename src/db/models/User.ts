@@ -15,6 +15,9 @@ export interface IUser extends Document {
   age?: number;
   gender?: Gender;
   activityLevel?: ActivityLevel;
+  dailyProteinGoal?: number;
+  dailyCarbsGoal?: number;
+  dailyFatGoal?: number;
   dailyTokensUsed: number;
   tokensResetDate: Date;
   createdAt: Date;
@@ -33,6 +36,9 @@ const UserSchema = new Schema<IUser>(
     age: { type: Number },
     gender: { type: String, enum: ['male', 'female'] },
     activityLevel: { type: String, enum: ['sedentary', 'light', 'moderate', 'active', 'very_active'] },
+    dailyProteinGoal: { type: Number },
+    dailyCarbsGoal: { type: Number },
+    dailyFatGoal: { type: Number },
     dailyTokensUsed: { type: Number, default: 0 },
     tokensResetDate: { type: Date, default: () => new Date() },
   },

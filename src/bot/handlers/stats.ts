@@ -14,6 +14,10 @@ function buildSummaryLine(calories: number, goal: number): string {
   return `${bar} ${pct}% от нормы`;
 }
 
+function formatMacroGoal(current: number, goal?: number): string {
+  return goal !== undefined ? `${current}г / ${goal}г` : `${current}г`;
+}
+
 function buildProgressBar(pct: number): string {
   const filled = Math.min(10, Math.round(pct / 10));
   return '█'.repeat(filled) + '░'.repeat(10 - filled);
@@ -51,13 +55,17 @@ export async function handleToday(ctx: Context): Promise<void> {
   const goalLine = goal
     ? `🔥 Калории: *${totals.calories}* / ${goal} ккал\n${buildSummaryLine(totals.calories, goal)}`
     : `🔥 Калории: *${totals.calories}* ккал _(норма не задана)_`;
+  const macroLine =
+    `🥩 Белки: ${formatMacroGoal(totals.protein, user?.dailyProteinGoal)}  |  ` +
+    `🍞 Углеводы: ${formatMacroGoal(totals.carbs, user?.dailyCarbsGoal)}  |  ` +
+    `🧈 Жиры: ${formatMacroGoal(totals.fat, user?.dailyFatGoal)}`;
 
   await ctx.reply(
     `📅 *Сегодня, ${new Date().toLocaleDateString('ru-RU')}*\n\n` +
       `${lines}\n\n` +
       `─────────────────\n` +
       `${goalLine}\n\n` +
-      `🥩 Белки: ${totals.protein}г  |  🍞 Углеводы: ${totals.carbs}г  |  🧈 Жиры: ${totals.fat}г`,
+      macroLine,
     { parse_mode: 'Markdown' }
   );
 
