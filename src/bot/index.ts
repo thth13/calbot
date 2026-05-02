@@ -1,5 +1,5 @@
 import { Bot } from 'grammy';
-import { handleStart, mainKeyboard } from './handlers/start.js';
+import { handleInfo, handleStart, mainKeyboard } from './handlers/start.js';
 import { handleFoodDescription, handlePhoto, handlePhotoDetails, handlePhotoSkip } from './handlers/photo.js';
 import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
 import { handlePremium } from './handlers/premium.js';
@@ -33,6 +33,7 @@ export function createBot(token: string) {
   bot.command('history', handleHistory);
   bot.command('premium', handlePremium);
   bot.command('extended', handleExtendedStats);
+  bot.command('info', handleInfo);
 
   bot.hears('📅 Сегодня', handleToday);
   bot.hears('📊 Неделя', handleWeek);

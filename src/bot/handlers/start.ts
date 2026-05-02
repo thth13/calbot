@@ -10,6 +10,19 @@ export const mainKeyboard = new Keyboard()
   .text('👤 Мой профиль').text('💎 Premium')
   .resized();
 
+function buildInfoText(firstName?: string): string {
+  const greeting = firstName ? `👋 Hi, ${firstName}! I'm CalBot — your nutrition and calorie tracking assistant.` : `👋 Hi! I'm CalBot — your nutrition and calorie tracking assistant.`;
+
+  return (
+    greeting +
+    `\n\nYou can send:\n` +
+    `• 📸 a food photo — I'll estimate calories and nutritional value from the image (some inaccuracy is possible)\n` +
+    `• 📝 text — just write what you ate and how much: the more precise your description, the more accurate the estimate\n` +
+    `• 📸 + 📝 a photo with a description — this is the most accurate option\n\n` +
+    `📊 You don't have to describe everything in detail, but if you add what is on the plate and how much, the result will be more accurate.`
+  );
+}
+
 export async function handleStart(ctx: Context): Promise<void> {
   const tgUser = ctx.from;
   if (!tgUser) return;
@@ -25,11 +38,11 @@ export async function handleStart(ctx: Context): Promise<void> {
   );
 
   await ctx.reply(
-    `👋 Привет, ${tgUser.first_name}!\n\n` +
-      `Я считаю калории по фото еды или описанию тарелки.\n\n` +
-      `📸 Отправь фото тарелки — я определю блюдо и подсчитаю КБЖУ.\n` +
-      `📝 Или просто напиши, что было на тарелке, если фото нет.\n\n` +
-      `Используй кнопки ниже для просмотра статистики и профиля.`,
+    buildInfoText(tgUser.first_name) + `\n\nUse the buttons below to view your stats and profile.`,
     { parse_mode: 'Markdown', reply_markup: mainKeyboard }
   );
+}
+
+export async function handleInfo(ctx: Context): Promise<void> {
+  await ctx.reply(buildInfoText(), { parse_mode: 'Markdown', reply_markup: mainKeyboard });
 }
