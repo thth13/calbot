@@ -68,15 +68,6 @@ export async function handleToday(ctx: Context): Promise<void> {
       macroLine,
     { parse_mode: 'Markdown' }
   );
-
-  // Показываем кнопки редактирования для каждой записи
-  for (const entry of entries) {
-    const keyboard = new InlineKeyboard()
-      .text('✏️ Редактировать', `edit_entry_${entry._id}`)
-      .text('🗑 Удалить', `delete_entry_${entry._id}`);
-
-    await ctx.reply(`${entry.foodDescription} — ${entry.calories} ккал`, { reply_markup: keyboard });
-  }
 }
 
 export async function handleWeek(ctx: Context): Promise<void> {

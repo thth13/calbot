@@ -5,9 +5,7 @@ import { User } from '../../db/models/User.js';
 export const mainKeyboard = new Keyboard()
   .text('📅 Сегодня').text('📊 Неделя')
   .row()
-  .text('📋 История').text('📈 Расширенная')
-  .row()
-  .text('👤 Мой профиль').text('💎 Premium')
+  .text('📋 История').text('👤 Мой профиль')
   .resized();
 
 function buildInfoText(firstName?: string): string {

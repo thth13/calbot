@@ -4,14 +4,25 @@ import { handleFoodDescription, handlePhoto, handlePhotoDetails, handlePhotoSkip
 import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
 import { handlePremium } from './handlers/premium.js';
 import {
+  handleActivityCallback,
+  handleGenderCallback,
   handleGoal,
+  handleGoalBackCallback,
   handleGoalCalcCallback,
+  handleGoalCancelCallback,
+  handleGoalChangeCallback,
+  handleGoalExplainCallback,
   handleGoalManualCallback,
+  handleGoalRestartCallback,
+  handleGoalSaveCallback,
+  handleGoalTypeCallback,
   handleManualGoalCancelCallback,
   handleManualGoalFieldCallback,
   handleManualGoalSaveCallback,
-  handleGenderCallback,
-  handleActivityCallback,
+  handleSportCallback,
+  handleSportTypeCallback,
+  handleTrainingDurationCallback,
+  handleTrainingFrequencyCallback,
   handleWizardMessage,
   wizardState,
 } from './handlers/goal.js';
@@ -44,6 +55,15 @@ export function createBot(token: string) {
 
   // Wizard callbacks
   bot.callbackQuery('goal_calc', handleGoalCalcCallback);
+  bot.callbackQuery('goal_back', handleGoalBackCallback);
+  bot.callbackQuery('goal_cancel', handleGoalCancelCallback);
+  bot.callbackQuery('goal_save', handleGoalSaveCallback);
+  bot.callbackQuery('goal_change', handleGoalChangeCallback);
+  bot.callbackQuery('goal_restart', handleGoalRestartCallback);
+  bot.callbackQuery('goal_explain', handleGoalExplainCallback);
+  bot.callbackQuery('goal_type_lose_weight', (ctx) => handleGoalTypeCallback(ctx, 'lose_weight'));
+  bot.callbackQuery('goal_type_maintain_weight', (ctx) => handleGoalTypeCallback(ctx, 'maintain_weight'));
+  bot.callbackQuery('goal_type_gain_muscle', (ctx) => handleGoalTypeCallback(ctx, 'gain_muscle'));
   bot.callbackQuery('goal_manual', handleGoalManualCallback);
   bot.callbackQuery(/^manual_goal_(calories|protein|carbs|fat)$/, handleManualGoalFieldCallback);
   bot.callbackQuery('manual_goal_save', handleManualGoalSaveCallback);
@@ -54,7 +74,21 @@ export function createBot(token: string) {
   bot.callbackQuery('activity_light', (ctx) => handleActivityCallback(ctx, 'light'));
   bot.callbackQuery('activity_moderate', (ctx) => handleActivityCallback(ctx, 'moderate'));
   bot.callbackQuery('activity_active', (ctx) => handleActivityCallback(ctx, 'active'));
-  bot.callbackQuery('activity_very_active', (ctx) => handleActivityCallback(ctx, 'very_active'));
+  bot.callbackQuery('sport_no', (ctx) => handleSportCallback(ctx, false));
+  bot.callbackQuery('sport_yes', (ctx) => handleSportCallback(ctx, true));
+  bot.callbackQuery('sport_type_strength', (ctx) => handleSportTypeCallback(ctx, 'strength'));
+  bot.callbackQuery('sport_type_cardio', (ctx) => handleSportTypeCallback(ctx, 'cardio'));
+  bot.callbackQuery('sport_type_mixed', (ctx) => handleSportTypeCallback(ctx, 'mixed'));
+  bot.callbackQuery('sport_type_team', (ctx) => handleSportTypeCallback(ctx, 'team'));
+  bot.callbackQuery('sport_type_martial_arts', (ctx) => handleSportTypeCallback(ctx, 'martial_arts'));
+  bot.callbackQuery('sport_type_other', (ctx) => handleSportTypeCallback(ctx, 'other'));
+  bot.callbackQuery('training_frequency_low', (ctx) => handleTrainingFrequencyCallback(ctx, 'low'));
+  bot.callbackQuery('training_frequency_medium', (ctx) => handleTrainingFrequencyCallback(ctx, 'medium'));
+  bot.callbackQuery('training_frequency_high', (ctx) => handleTrainingFrequencyCallback(ctx, 'high'));
+  bot.callbackQuery('training_duration_short', (ctx) => handleTrainingDurationCallback(ctx, 'short'));
+  bot.callbackQuery('training_duration_medium', (ctx) => handleTrainingDurationCallback(ctx, 'medium'));
+  bot.callbackQuery('training_duration_long', (ctx) => handleTrainingDurationCallback(ctx, 'long'));
+  bot.callbackQuery('training_duration_extra_long', (ctx) => handleTrainingDurationCallback(ctx, 'extra_long'));
 
   // Edit/delete entry callbacks
   bot.callbackQuery(/^edit_entry_(.+)$/, handleEditEntryStart);
