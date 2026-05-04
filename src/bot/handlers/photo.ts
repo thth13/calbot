@@ -15,13 +15,6 @@ const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
   snack: '🥨 Перекус',
 };
 
-interface PendingPhoto {
-  fileId: string;
-  imageUrl: string;
-}
-
-export const pendingPhotoState = new Map<number, PendingPhoto>();
-
 const DAILY_TOKEN_LIMIT = 30_000;
 
 async function processMeal(
@@ -72,7 +65,7 @@ async function processMeal(
     user.tokensResetDate = today;
     await user.save();
 
-    await FoodEntry.create({
+    const entry = await FoodEntry.create({
       userId: user._id,
       telegramId: tgUser.id,
       foodDescription: nutrition.foodDescription,
@@ -97,6 +90,7 @@ async function processMeal(
     const remaining = (user.dailyCalorieGoal || 2000) - todayTotal;
     const confidenceLabel = CONFIDENCE_EMOJI[nutrition.confidence] ?? '⚠️';
     const mealTypeLabel = MEAL_TYPE_LABELS[nutrition.mealType];
+    const keyboard = new InlineKeyboard().text('✏️ Редактировать', `edit_entry_${entry._id}`);
 
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id);
 
@@ -110,7 +104,7 @@ async function processMeal(
         `${confidenceLabel} Точность: ${nutrition.confidence}\n\n` +
         `📊 *Сегодня итого:* ${todayTotal} ккал\n` +
         `${remaining >= 0 ? `✅ Остаток: ${remaining} ккал` : `⚠️ Превышение: ${Math.abs(remaining)} ккал`}`,
-      { parse_mode: 'Markdown' }
+      { parse_mode: 'Markdown', reply_markup: keyboard }
     );
   } catch (err) {
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id).catch(() => null);
@@ -154,53 +148,7 @@ export async function handlePhoto(ctx: Context): Promise<void> {
 
   const imageUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
 
-  // Если фото пришло с подписью — сразу анализируем
+  // Детали учитываются только если они отправлены подписью к фото.
   const caption = ctx.message?.caption?.trim();
-  if (caption) {
-    await processPhoto(ctx, imageUrl, bestPhoto.file_id, caption);
-    return;
-  }
-
-  // Иначе — спрашиваем детали
-  pendingPhotoState.set(tgUser.id, { fileId: bestPhoto.file_id, imageUrl });
-
-  const keyboard = new InlineKeyboard().text('Пропустить →', 'photo_skip');
-
-  await ctx.reply(
-    '📝 Есть детали приготовления?\n\n' +
-      'Напиши, например: _жарилось на сливочном масле_, _политo соусом тар-тар_, _с сыром сверху_ — это повысит точность расчёта.\n\n' +
-      'Или нажми «Пропустить», если деталей нет.',
-    { parse_mode: 'Markdown', reply_markup: keyboard }
-  );
-}
-
-export async function handlePhotoDetails(ctx: Context): Promise<boolean> {
-  const tgUser = ctx.from;
-  if (!tgUser) return false;
-
-  const pending = pendingPhotoState.get(tgUser.id);
-  if (!pending) return false;
-
-  pendingPhotoState.delete(tgUser.id);
-
-  const details = ctx.message?.text?.trim();
-  await processPhoto(ctx, pending.imageUrl, pending.fileId, details);
-  return true;
-}
-
-export async function handlePhotoSkip(ctx: Context): Promise<void> {
-  const tgUser = ctx.from;
-  if (!tgUser) return;
-
-  const pending = pendingPhotoState.get(tgUser.id);
-  if (!pending) {
-    await ctx.answerCallbackQuery();
-    return;
-  }
-
-  pendingPhotoState.delete(tgUser.id);
-  await ctx.answerCallbackQuery();
-  await ctx.editMessageReplyMarkup({ reply_markup: undefined });
-
-  await processPhoto(ctx, pending.imageUrl, pending.fileId);
+  await processPhoto(ctx, imageUrl, bestPhoto.file_id, caption || undefined);
 }

@@ -4,8 +4,14 @@ import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
 
 const MEAL_TYPE_LABELS: Record<MealType, string> = {
-  meal: 'приём пищи',
-  snack: 'перекус',
+  meal: '🍽 Приём пищи',
+  snack: '🥨 Перекус',
+};
+
+const CONFIDENCE_EMOJI: Record<string, string> = {
+  high: '✅',
+  medium: '⚠️',
+  low: '❓',
 };
 
 interface EditState {
@@ -17,9 +23,10 @@ export const editingState = new Map<number, EditState>();
 
 export async function handleDeleteEntry(ctx: Context): Promise<void> {
   const entryId = ctx.match instanceof Array ? ctx.match[1] : ctx.match as string;
-  if (!entryId) return;
+  const telegramId = ctx.from?.id;
+  if (!entryId || !telegramId) return;
 
-  const entry = await FoodEntry.findByIdAndDelete(entryId);
+  const entry = await FoodEntry.findOneAndDelete({ _id: entryId, telegramId });
   if (!entry) {
     await ctx.answerCallbackQuery({ text: '❌ Запись не найдена', show_alert: true });
     return;
@@ -33,7 +40,7 @@ export async function handleEditEntryStart(ctx: Context): Promise<void> {
   const entryId = ctx.match instanceof Array ? ctx.match[1] : ctx.match as string;
   if (!entryId || !ctx.from) return;
 
-  const entry = await FoodEntry.findById(entryId);
+  const entry = await FoodEntry.findOne({ _id: entryId, telegramId: ctx.from.id });
   if (!entry) {
     await ctx.answerCallbackQuery({ text: '❌ Запись не найдена', show_alert: true });
     return;
@@ -47,6 +54,8 @@ export async function handleEditEntryStart(ctx: Context): Promise<void> {
     .row()
     .text('🍞 Углеводы', `edit_field_${entryId}_carbs`)
     .text('🧈 Жиры', `edit_field_${entryId}_fat`)
+    .row()
+    .text('🥨 Тип приёма', `edit_meal_type_${entryId}`)
     .row()
     .text('❌ Отмена', `cancel_edit_${entryId}`);
 
@@ -63,14 +72,56 @@ export async function handleEditEntryStart(ctx: Context): Promise<void> {
   await ctx.answerCallbackQuery();
 }
 
-export async function handleSelectEditField(ctx: Context): Promise<void> {
-  const match = ctx.match instanceof Array ? ctx.match[1] : ctx.match;
-  
-  if (!match) return;
+async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: number): Promise<void> {
+  const entry = await FoodEntry.findOne({ _id: entryId, telegramId });
+  if (!entry) {
+    await ctx.reply('❌ Запись не найдена');
+    return;
+  }
 
-  const [entryId, field] = match.toString().split('_') || [];
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [user, todayEntries] = await Promise.all([
+    User.findOne({ telegramId }),
+    FoodEntry.find({
+      telegramId,
+      createdAt: { $gte: todayStart },
+    }),
+  ]);
+
+  const todayTotal = todayEntries.reduce((sum, e) => sum + e.calories, 0);
+  const remaining = (user?.dailyCalorieGoal || 2000) - todayTotal;
+  const confidenceLabel = CONFIDENCE_EMOJI[entry.confidence] ?? '⚠️';
+  const mealTypeLabel = MEAL_TYPE_LABELS[entry.mealType ?? 'meal'];
+  const keyboard = new InlineKeyboard().text('✏️ Редактировать', `edit_entry_${entry._id}`);
+
+  await ctx.reply(
+    `🍽 *${entry.foodDescription}*\n\n` +
+      `${mealTypeLabel}\n` +
+      `🔥 Калории: *${entry.calories} ккал*\n` +
+      `🥩 Белки: ${entry.protein}г\n` +
+      `🍞 Углеводы: ${entry.carbs}г\n` +
+      `🧈 Жиры: ${entry.fat}г\n\n` +
+      `${confidenceLabel} Точность: ${entry.confidence}\n\n` +
+      `📊 *Сегодня итого:* ${todayTotal} ккал\n` +
+      `${remaining >= 0 ? `✅ Остаток: ${remaining} ккал` : `⚠️ Превышение: ${Math.abs(remaining)} ккал`}`,
+    { parse_mode: 'Markdown', reply_markup: keyboard }
+  );
+}
+
+export async function handleSelectEditField(ctx: Context): Promise<void> {
+  const match = ctx.match;
+  const entryId = match instanceof Array ? match[1] : undefined;
+  const field = match instanceof Array ? match[2] : undefined;
 
   if (!entryId || !field || !['calories', 'protein', 'carbs', 'fat'].includes(field)) return;
+
+  const entry = ctx.from ? await FoodEntry.findOne({ _id: entryId, telegramId: ctx.from.id }) : null;
+  if (!entry) {
+    await ctx.answerCallbackQuery({ text: '❌ Запись не найдена', show_alert: true });
+    return;
+  }
 
   if (ctx.from) {
     editingState.set(ctx.from.id, { entryId, field: field as EditState['field'] });
@@ -87,6 +138,48 @@ export async function handleSelectEditField(ctx: Context): Promise<void> {
   await ctx.answerCallbackQuery();
 }
 
+export async function handleSelectMealType(ctx: Context): Promise<void> {
+  const entryId = ctx.match instanceof Array ? ctx.match[1] : ctx.match as string;
+  if (!entryId || !ctx.from) return;
+
+  const entry = await FoodEntry.findOne({ _id: entryId, telegramId: ctx.from.id });
+  if (!entry) {
+    await ctx.answerCallbackQuery({ text: '❌ Запись не найдена', show_alert: true });
+    return;
+  }
+
+  const keyboard = new InlineKeyboard()
+    .text('🥨 Перекус', `set_meal_type_${entryId}_snack`)
+    .text('🍽 Приём пищи', `set_meal_type_${entryId}_meal`)
+    .row()
+    .text('❌ Отмена', `cancel_edit_${entryId}`);
+
+  await ctx.reply('Выбери тип приёма:', { reply_markup: keyboard });
+  await ctx.answerCallbackQuery();
+}
+
+export async function handleSetMealType(ctx: Context): Promise<void> {
+  const match = ctx.match;
+  const entryId = match instanceof Array ? match[1] : undefined;
+  const mealType = match instanceof Array ? match[2] : undefined;
+  const telegramId = ctx.from?.id;
+
+  if (!entryId || !telegramId || !mealType || !['meal', 'snack'].includes(mealType)) return;
+
+  const entry = await FoodEntry.findOne({ _id: entryId, telegramId });
+  if (!entry) {
+    await ctx.answerCallbackQuery({ text: '❌ Запись не найдена', show_alert: true });
+    return;
+  }
+
+  entry.mealType = mealType as MealType;
+  await entry.save();
+  editingState.delete(telegramId);
+
+  await ctx.answerCallbackQuery({ text: '✅ Тип приёма изменён' });
+  await replyWithEntrySummary(ctx, entryId, telegramId);
+}
+
 export async function handleEditFieldValue(ctx: Context): Promise<boolean> {
   const telegramId = ctx.from?.id;
   if (!telegramId || !ctx.message?.text) return false;
@@ -101,30 +194,19 @@ export async function handleEditFieldValue(ctx: Context): Promise<boolean> {
   }
 
   try {
-    const entry = await FoodEntry.findById(state.entryId);
+    const entry = await FoodEntry.findOne({ _id: state.entryId, telegramId });
     if (!entry) {
       await ctx.reply('❌ Запись не найдена');
       editingState.delete(telegramId);
       return true;
     }
 
-    const oldValue = entry[state.field];
     entry[state.field] = value;
     await entry.save();
 
     editingState.delete(telegramId);
 
-    const labels = {
-      calories: '🔥 Калории',
-      protein: '🥩 Белки',
-      carbs: '🍞 Углеводы',
-      fat: '🧈 Жиры',
-    };
-
-    await ctx.reply(
-      `✅ ${labels[state.field]} изменены\n` + `${oldValue} → ${value}`,
-      { parse_mode: 'Markdown' }
-    );
+    await replyWithEntrySummary(ctx, state.entryId, telegramId);
 
     return true;
   } catch (err) {

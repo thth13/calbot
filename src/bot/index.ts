@@ -1,6 +1,6 @@
 import { Bot } from 'grammy';
 import { handleInfo, handleStart, mainKeyboard } from './handlers/start.js';
-import { handleFoodDescription, handlePhoto, handlePhotoDetails, handlePhotoSkip } from './handlers/photo.js';
+import { handleFoodDescription, handlePhoto } from './handlers/photo.js';
 import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
 import { handlePremium } from './handlers/premium.js';
 import {
@@ -32,6 +32,8 @@ import {
   handleSelectEditField,
   handleEditFieldValue,
   handleCancelEdit,
+  handleSelectMealType,
+  handleSetMealType,
   editingState,
 } from './handlers/manage.js';
 
@@ -93,10 +95,12 @@ export function createBot(token: string) {
   // Edit/delete entry callbacks
   bot.callbackQuery(/^edit_entry_(.+)$/, handleEditEntryStart);
   bot.callbackQuery(/^delete_entry_(.+)$/, handleDeleteEntry);
-  bot.callbackQuery(/^edit_field_.+_(calories|protein|carbs|fat)$/, handleSelectEditField);
+  bot.callbackQuery(/^edit_field_(.+)_(calories|protein|carbs|fat)$/, handleSelectEditField);
+  bot.callbackQuery(/^edit_meal_type_(.+)$/, handleSelectMealType);
+  bot.callbackQuery(/^set_meal_type_(.+)_(meal|snack)$/, handleSetMealType);
   bot.callbackQuery(/^cancel_edit_(.+)$/, handleCancelEdit);
 
-  // Route text messages: editing state takes priority, then wizard and pending photo
+  // Route text messages: editing state takes priority, then wizard
   bot.on('message:text', async (ctx, next) => {
     const telegramId = ctx.from?.id;
     if (telegramId) {
@@ -104,7 +108,6 @@ export function createBot(token: string) {
         const handled = await handleEditFieldValue(ctx);
         if (handled) return;
       }
-      if (await handlePhotoDetails(ctx)) return;
       if (wizardState.has(telegramId)) {
         const handled = await handleWizardMessage(ctx);
         if (handled) return;
@@ -115,7 +118,6 @@ export function createBot(token: string) {
     await handleFoodDescription(ctx);
   });
 
-  bot.callbackQuery('photo_skip', handlePhotoSkip);
   bot.on('message:photo', handlePhoto);
 
   bot.catch((err) => {
