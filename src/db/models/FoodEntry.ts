@@ -1,9 +1,12 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
+export type MealType = 'meal' | 'snack';
+
 export interface IFoodEntry extends Document {
   userId: Types.ObjectId;
   telegramId: number;
   foodDescription: string;
+  mealType: MealType;
   calories: number;
   protein: number;
   carbs: number;
@@ -18,6 +21,7 @@ const FoodEntrySchema = new Schema<IFoodEntry>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     telegramId: { type: Number, required: true, index: true },
     foodDescription: { type: String, required: true },
+    mealType: { type: String, enum: ['meal', 'snack'], default: 'meal', required: true },
     calories: { type: Number, required: true },
     protein: { type: Number, required: true },
     carbs: { type: Number, required: true },

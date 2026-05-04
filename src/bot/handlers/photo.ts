@@ -10,6 +10,11 @@ const CONFIDENCE_EMOJI: Record<string, string> = {
   low: '❓',
 };
 
+const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
+  meal: '🍽 Приём пищи',
+  snack: '🥨 Перекус',
+};
+
 interface PendingPhoto {
   fileId: string;
   imageUrl: string;
@@ -71,6 +76,7 @@ async function processMeal(
       userId: user._id,
       telegramId: tgUser.id,
       foodDescription: nutrition.foodDescription,
+      mealType: nutrition.mealType,
       calories: nutrition.calories,
       protein: nutrition.protein,
       carbs: nutrition.carbs,
@@ -90,11 +96,13 @@ async function processMeal(
     const todayTotal = todayEntries.reduce((sum, e) => sum + e.calories, 0);
     const remaining = (user.dailyCalorieGoal || 2000) - todayTotal;
     const confidenceLabel = CONFIDENCE_EMOJI[nutrition.confidence] ?? '⚠️';
+    const mealTypeLabel = MEAL_TYPE_LABELS[nutrition.mealType];
 
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id);
 
     await ctx.reply(
       `🍽 *${nutrition.foodDescription}*\n\n` +
+        `${mealTypeLabel}\n` +
         `🔥 Калории: *${nutrition.calories} ккал*\n` +
         `🥩 Белки: ${nutrition.protein}г\n` +
         `🍞 Углеводы: ${nutrition.carbs}г\n` +
@@ -114,8 +122,8 @@ async function processMeal(
 async function processPhoto(ctx: Context, imageUrl: string, fileId: string, details?: string): Promise<void> {
   await processMeal(ctx, () => analyzeFood(imageUrl, details), {
     photoFileId: fileId,
-    waitText: '🔍 Анализирую блюдо...',
-    failureText: '❌ Не удалось распознать блюдо. Попробуй сделать более чёткое фото.',
+    waitText: '🔍 Анализирую еду...',
+    failureText: '❌ Не удалось распознать еду. Попробуй сделать более чёткое фото.',
   });
 }
 

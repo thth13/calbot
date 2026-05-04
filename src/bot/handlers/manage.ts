@@ -1,6 +1,12 @@
 import { Context, InlineKeyboard } from 'grammy';
+import type { MealType } from '../../db/models/FoodEntry.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
+
+const MEAL_TYPE_LABELS: Record<MealType, string> = {
+  meal: 'приём пищи',
+  snack: 'перекус',
+};
 
 interface EditState {
   entryId: string;
@@ -47,6 +53,7 @@ export async function handleEditEntryStart(ctx: Context): Promise<void> {
   await ctx.reply(
     `✏️ *Редактирование записи*\n\n` +
       `${entry.foodDescription}\n` +
+      `${MEAL_TYPE_LABELS[entry.mealType ?? 'meal']}\n` +
       `🔥 ${entry.calories} ккал\n` +
       `🥩 ${entry.protein}г  |  🍞 ${entry.carbs}г  |  🧈 ${entry.fat}г\n\n` +
       `Выбери, что хочешь изменить:`,

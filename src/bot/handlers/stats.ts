@@ -1,11 +1,21 @@
 import { Context, InlineKeyboard } from 'grammy';
+import type { MealType } from '../../db/models/FoodEntry.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
 import { buildPremiumKeyboard, isPremiumActive } from './premium.js';
 
-function formatEntry(entry: { foodDescription: string; calories: number; createdAt: Date }): string {
+const MEAL_TYPE_LABELS: Record<MealType, string> = {
+  meal: 'приём пищи',
+  snack: 'перекус',
+};
+
+function getMealTypeLabel(mealType?: MealType): string {
+  return MEAL_TYPE_LABELS[mealType ?? 'meal'];
+}
+
+function formatEntry(entry: { foodDescription: string; mealType?: MealType; calories: number; createdAt: Date }): string {
   const time = entry.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  return `  • ${time} — ${entry.foodDescription} (${entry.calories} ккал)`;
+  return `  • ${time} — ${entry.foodDescription} (${getMealTypeLabel(entry.mealType)}, ${entry.calories} ккал)`;
 }
 
 function buildSummaryLine(calories: number, goal: number): string {
@@ -91,17 +101,17 @@ export async function handleWeek(ctx: Context): Promise<void> {
   const goal = user?.dailyCalorieGoal;
 
   // Группируем по дням
-  const byDay = new Map<string, { calories: number; protein: number; carbs: number; fat: number; count: number }>();
+  const byDay = new Map<string, { calories: number; protein: number; carbs: number; fat: number; mealCount: number }>();
 
   for (const e of entries) {
     const day = e.createdAt.toLocaleDateString('ru-RU');
-    const cur = byDay.get(day) ?? { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
+    const cur = byDay.get(day) ?? { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 };
     byDay.set(day, {
       calories: cur.calories + e.calories,
       protein: cur.protein + e.protein,
       carbs: cur.carbs + e.carbs,
       fat: cur.fat + e.fat,
-      count: cur.count + 1,
+      mealCount: cur.mealCount + (e.mealType === 'snack' ? 0 : 1),
     });
   }
 
@@ -110,7 +120,7 @@ export async function handleWeek(ctx: Context): Promise<void> {
       const icon = goal
         ? d.calories > goal ? '🔴' : d.calories > goal * 0.8 ? '🟡' : '🟢'
         : '⚪';
-      return `${icon} ${date}: *${d.calories}* ккал (${d.count} приёма)`;
+      return `${icon} ${date}: *${d.calories}* ккал (${d.mealCount} приёма)`;
     })
     .join('\n');
 

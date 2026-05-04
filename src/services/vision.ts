@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 
 export interface NutritionResult {
   foodDescription: string;
+  mealType: 'meal' | 'snack';
   calories: number;
   protein: number;
   carbs: number;
@@ -12,15 +13,19 @@ export interface NutritionResult {
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `You are a nutrition expert. Estimate nutritional content.
+const SYSTEM_PROMPT = `You are a nutrition expert. Estimate nutritional content and classify eating occasion type.
 Always respond with valid JSON only, no markdown, no extra text.
 Be realistic about portion sizes.
 If multiple dishes are present, sum everything up.`;
 
 const USER_PROMPT = `Analyze this food image and estimate nutritional content.
+Classify the eating occasion:
+- "snack" if it looks like a small bite, drink, dessert, fruit, bar, nuts, yogurt, sandwich half, or other light food that is not a complete meal;
+- "meal" if it looks like breakfast, lunch, dinner, a full plate, or a substantial combined dish.
 Return ONLY a JSON object with these exact fields:
 {
   "foodDescription": "brief description of what you see",
+  "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,
   "carbs": <number in grams>,
@@ -31,6 +36,9 @@ Use confidence "low" if image is blurry or food is hard to identify, "high" if c
 
 const TEXT_USER_PROMPT = `Analyze this user-described meal and estimate nutritional content.
 The user may write in Russian, Ukrainian, English, or a mix of them.
+Classify the eating occasion:
+- "snack" if the user describes a small bite, drink, dessert, fruit, bar, nuts, yogurt, a small sandwich, "перекус", "снек", "snack", or other light food that is not a complete meal;
+- "meal" if the user describes breakfast, lunch, dinner, a full plate, or a substantial combined dish.
 Treat explicit quantities as authoritative:
 - grams/g/г/гр/грамм mean the exact edible weight of that product;
 - kilograms/kg/кг must be converted to grams and scaled exactly;
@@ -42,6 +50,7 @@ If the user lists several products, calculate each product from its own quantity
 Return ONLY a JSON object with these exact fields:
 {
   "foodDescription": "brief normalized description of the meal",
+  "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,
   "carbs": <number in grams>,
@@ -101,6 +110,7 @@ function parseNutritionResponse(content: string, tokensUsed: number): NutritionR
     typeof parsed.carbs !== 'number' ||
     typeof parsed.fat !== 'number' ||
     typeof parsed.foodDescription !== 'string' ||
+    !['meal', 'snack'].includes(parsed.mealType) ||
     !['low', 'medium', 'high'].includes(parsed.confidence)
   ) {
     throw new Error('Invalid nutrition data from OpenAI');
