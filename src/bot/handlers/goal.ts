@@ -70,6 +70,13 @@ const GOAL_LABELS: Record<FitnessGoal, string> = {
   gain_muscle: 'набор мышечной массы',
 };
 
+const MANUAL_GOAL_USER_FIELDS: Record<ManualGoalField, keyof IUser> = {
+  calories: 'dailyCalorieGoal',
+  protein: 'dailyProteinGoal',
+  carbs: 'dailyCarbsGoal',
+  fat: 'dailyFatGoal',
+};
+
 const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
   sedentary: 'Почти не двигаюсь',
   light: 'Немного хожу',
@@ -201,10 +208,7 @@ function buildManualGoalKeyboard(): InlineKeyboard {
     .text('🥩 Белки', 'manual_goal_protein')
     .row()
     .text('🍚 Углеводы', 'manual_goal_carbs')
-    .text('🥑 Жиры', 'manual_goal_fat')
-    .row()
-    .text('✅ Сохранить', 'manual_goal_save')
-    .text('❌ Отмена', 'manual_goal_cancel');
+    .text('🥑 Жиры', 'manual_goal_fat');
 }
 
 function buildManualGoalText(goals: Partial<Record<ManualGoalField, number>>): string {
@@ -214,7 +218,7 @@ function buildManualGoalText(goals: Partial<Record<ManualGoalField, number>>): s
     `🥩 Белки: ${formatGoalValue(goals.protein, 'г')}\n` +
     `🍚 Углеводы: ${formatGoalValue(goals.carbs, 'г')}\n` +
     `🥑 Жиры: ${formatGoalValue(goals.fat, 'г')}\n\n` +
-    `Выбери кнопкой, что хочешь указать.`
+    `Выбери кнопкой, что хочешь указать. Значение применится сразу после ввода.`
   );
 }
 
@@ -655,7 +659,15 @@ export async function handleManualGoalFieldCallback(ctx: Context): Promise<void>
   const state = wizardState.get(telegramId) ?? { step: 'manual' as const };
   state.step = 'manual';
   state.manualField = field;
-  state.manualGoals ??= {};
+  if (!state.manualGoals) {
+    const user = await User.findOne({ telegramId });
+    state.manualGoals = {
+      calories: user?.dailyCalorieGoal,
+      protein: user?.dailyProteinGoal,
+      carbs: user?.dailyCarbsGoal,
+      fat: user?.dailyFatGoal,
+    };
+  }
   wizardState.set(telegramId, state);
 
   const labels: Record<ManualGoalField, string> = {
@@ -727,32 +739,39 @@ export async function handleWizardMessage(ctx: Context): Promise<boolean> {
 
   if (state.step === 'manual') {
     if (!state.manualField) {
-      await ctx.reply('Выбери кнопкой, что хочешь указать.', {
-        reply_markup: buildManualGoalKeyboard(),
-      });
-      return true;
+      wizardState.delete(telegramId);
+      return false;
     }
 
+    const field = state.manualField;
     const value = Number(text.replace(',', '.'));
     if (Number.isNaN(value)) {
       await ctx.reply('❌ Введи число.');
       return true;
     }
 
-    if (state.manualField === 'calories' && (value < 500 || value > 10000)) {
+    if (field === 'calories' && (value < 500 || value > 10000)) {
       await ctx.reply('❌ Калории должны быть от 500 до 10000.');
       return true;
     }
 
-    if (state.manualField !== 'calories' && (value < 0 || value > 1000)) {
+    if (field !== 'calories' && (value < 0 || value > 1000)) {
       await ctx.reply('❌ Белки, углеводы и жиры должны быть от 0 до 1000 г.');
       return true;
     }
 
+    const roundedValue = Math.round(value);
     state.manualGoals ??= {};
-    state.manualGoals[state.manualField] = Math.round(value);
+    state.manualGoals[field] = roundedValue;
     state.manualField = undefined;
-    wizardState.set(telegramId, state);
+
+    await User.findOneAndUpdate(
+      { telegramId },
+      { $set: { [MANUAL_GOAL_USER_FIELDS[field]]: roundedValue } },
+      { upsert: true }
+    );
+
+    wizardState.delete(telegramId);
 
     await ctx.reply(buildManualGoalText(state.manualGoals), {
       parse_mode: 'Markdown',
