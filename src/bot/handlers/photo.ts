@@ -17,6 +17,7 @@ const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
 
 const DAILY_TOKEN_LIMIT = 30_000;
 const FREE_DAILY_ENTRY_LIMIT = 2;
+const PREMIUM_DAILY_ENTRY_LIMIT = 100;
 
 async function processMeal(
   ctx: Context,
@@ -55,20 +56,24 @@ async function processMeal(
     return;
   }
 
-  if (!isPremiumActive(user.premiumUntil)) {
-    const todayEntriesCount = await FoodEntry.countDocuments({
-      telegramId: tgUser.id,
-      createdAt: { $gte: today },
-    });
+  const premiumActive = isPremiumActive(user.premiumUntil);
+  const dailyEntryLimit = premiumActive ? PREMIUM_DAILY_ENTRY_LIMIT : FREE_DAILY_ENTRY_LIMIT;
+  const todayEntriesCount = await FoodEntry.countDocuments({
+    telegramId: tgUser.id,
+    createdAt: { $gte: today },
+  });
 
-    if (todayEntriesCount >= FREE_DAILY_ENTRY_LIMIT) {
+  if (todayEntriesCount >= dailyEntryLimit) {
+    if (premiumActive) {
+      await ctx.reply('⛔ Ты достиг лимита подписки: 100 записей в день. Лимит обновится завтра.');
+    } else {
       await ctx.reply(
         '⛔ В бесплатной версии доступно только 2 записи в день.\n\n' +
           'Подключи подписку и веди записи без ограничений.',
         { reply_markup: buildPremiumKeyboard(ctx) }
       );
-      return;
     }
+    return;
   }
 
   const waitMsg = await ctx.reply(options.waitText);
