@@ -27,7 +27,7 @@ function buildPremiumUrl(ctx: Context): string {
 
 export function buildPremiumKeyboard(ctx?: Context): InlineKeyboard {
   const webAppUrl = ctx ? buildPremiumUrl(ctx) : getPremiumWebAppUrl();
-  return new InlineKeyboard().webApp('Открыть оплату', webAppUrl);
+  return new InlineKeyboard().webApp('Оформить подписку', webAppUrl);
 }
 
 export async function handlePremium(ctx: Context): Promise<void> {

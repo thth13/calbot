@@ -2,7 +2,7 @@ import { Context, InlineKeyboard } from 'grammy';
 import { analyzeFood, analyzeFoodDescription, NutritionResult } from '../../services/vision.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
-import { isPremiumActive } from './premium.js';
+import { buildPremiumKeyboard, isPremiumActive } from './premium.js';
 
 const CONFIDENCE_EMOJI: Record<string, string> = {
   high: '✅',
@@ -16,6 +16,7 @@ const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
 };
 
 const DAILY_TOKEN_LIMIT = 30_000;
+const FREE_DAILY_ENTRY_LIMIT = 2;
 
 async function processMeal(
   ctx: Context,
@@ -52,6 +53,22 @@ async function processMeal(
         '💎 Premium снимает дневной лимит и открывает расширенную статистику.'
     );
     return;
+  }
+
+  if (!isPremiumActive(user.premiumUntil)) {
+    const todayEntriesCount = await FoodEntry.countDocuments({
+      telegramId: tgUser.id,
+      createdAt: { $gte: today },
+    });
+
+    if (todayEntriesCount >= FREE_DAILY_ENTRY_LIMIT) {
+      await ctx.reply(
+        '⛔ В бесплатной версии доступно только 2 записи в день.\n\n' +
+          'Подключи подписку и веди записи без ограничений.',
+        { reply_markup: buildPremiumKeyboard(ctx) }
+      );
+      return;
+    }
   }
 
   const waitMsg = await ctx.reply(options.waitText);
