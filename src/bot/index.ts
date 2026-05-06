@@ -1,4 +1,5 @@
 import { Bot } from 'grammy';
+import { answerGeneralQuestion, classifyTextMessageIntent } from '../services/assistant.js';
 import { handleInfo, handleStart, mainKeyboard } from './handlers/start.js';
 import { handleFoodDescription, handlePhoto } from './handlers/photo.js';
 import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
@@ -115,7 +116,19 @@ export function createBot(token: string) {
     }
     if (ctx.message.text.startsWith('/')) return next();
 
-    await handleFoodDescription(ctx);
+    try {
+      const intent = await classifyTextMessageIntent(ctx.message.text);
+      if (intent === 'meal_log') {
+        await handleFoodDescription(ctx);
+        return;
+      }
+
+      const answer = await answerGeneralQuestion(ctx.message.text);
+      await ctx.reply(answer);
+    } catch (err) {
+      console.error('Text intent/assistant handler error:', err);
+      await handleFoodDescription(ctx);
+    }
   });
 
   bot.on('message:photo', handlePhoto);
