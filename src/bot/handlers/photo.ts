@@ -2,6 +2,7 @@ import { Context, InlineKeyboard } from 'grammy';
 import { analyzeFood, analyzeFoodDescription, NutritionResult } from '../../services/vision.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
+import { NutritionTotals, sendGoalReachedNotification } from '../goalNotifications.js';
 import { buildPremiumKeyboard, isPremiumActive } from './premium.js';
 
 const CONFIDENCE_EMOJI: Record<string, string> = {
@@ -108,7 +109,22 @@ async function processMeal(
       createdAt: { $gte: todayStart },
     });
 
-    const todayTotal = todayEntries.reduce((sum, e) => sum + e.calories, 0);
+    const todayTotals = todayEntries.reduce<NutritionTotals>(
+      (sum, e) => ({
+        calories: sum.calories + e.calories,
+        protein: sum.protein + e.protein,
+        carbs: sum.carbs + e.carbs,
+        fat: sum.fat + e.fat,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+    const previousTotals: NutritionTotals = {
+      calories: todayTotals.calories - nutrition.calories,
+      protein: todayTotals.protein - nutrition.protein,
+      carbs: todayTotals.carbs - nutrition.carbs,
+      fat: todayTotals.fat - nutrition.fat,
+    };
+    const todayTotal = todayTotals.calories;
     const remaining = (user.dailyCalorieGoal || 2000) - todayTotal;
     const confidenceLabel = CONFIDENCE_EMOJI[nutrition.confidence] ?? '⚠️';
     const mealTypeLabel = MEAL_TYPE_LABELS[nutrition.mealType];
@@ -128,6 +144,8 @@ async function processMeal(
         `${remaining >= 0 ? `✅ Остаток: ${remaining} ккал` : `⚠️ Превышение: ${Math.abs(remaining)} ккал`}`,
       { parse_mode: 'Markdown', reply_markup: keyboard }
     );
+
+    await sendGoalReachedNotification(ctx, previousTotals, todayTotals, user);
   } catch (err) {
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id).catch(() => null);
     console.error('Meal handler error:', err);

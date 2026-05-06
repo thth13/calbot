@@ -2,6 +2,7 @@ import { Context, InlineKeyboard } from 'grammy';
 import type { MealType } from '../../db/models/FoodEntry.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
+import { NutritionTotals, sendGoalReachedNotification } from '../goalNotifications.js';
 
 const MEAL_TYPE_LABELS: Record<MealType, string> = {
   meal: '🍽 Приём пищи',
@@ -14,12 +15,32 @@ const CONFIDENCE_EMOJI: Record<string, string> = {
   low: '❓',
 };
 
+const NUTRITION_FIELDS = ['calories', 'protein', 'carbs', 'fat'] as const;
+
 interface EditState {
   entryId: string;
   field?: 'calories' | 'protein' | 'carbs' | 'fat';
 }
 
 export const editingState = new Map<number, EditState>();
+
+function getTodayStart(): Date {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return todayStart;
+}
+
+function sumNutritionTotals(entries: Array<Pick<NutritionTotals, (typeof NUTRITION_FIELDS)[number]>>): NutritionTotals {
+  return entries.reduce<NutritionTotals>(
+    (sum, entry) => ({
+      calories: sum.calories + entry.calories,
+      protein: sum.protein + entry.protein,
+      carbs: sum.carbs + entry.carbs,
+      fat: sum.fat + entry.fat,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+}
 
 export async function handleDeleteEntry(ctx: Context): Promise<void> {
   const entryId = ctx.match instanceof Array ? ctx.match[1] : ctx.match as string;
@@ -79,8 +100,7 @@ async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: 
     return;
   }
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  const todayStart = getTodayStart();
 
   const [user, todayEntries] = await Promise.all([
     User.findOne({ telegramId }),
@@ -90,7 +110,7 @@ async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: 
     }),
   ]);
 
-  const todayTotal = todayEntries.reduce((sum, e) => sum + e.calories, 0);
+  const todayTotal = sumNutritionTotals(todayEntries).calories;
   const remaining = (user?.dailyCalorieGoal || 2000) - todayTotal;
   const confidenceLabel = CONFIDENCE_EMOJI[entry.confidence] ?? '⚠️';
   const mealTypeLabel = MEAL_TYPE_LABELS[entry.mealType ?? 'meal'];
@@ -201,12 +221,29 @@ export async function handleEditFieldValue(ctx: Context): Promise<boolean> {
       return true;
     }
 
+    const todayStart = getTodayStart();
+    const isTodayEntry = entry.createdAt >= todayStart;
+    const [user, todayEntries] = await Promise.all([
+      User.findOne({ telegramId }),
+      isTodayEntry ? FoodEntry.find({ telegramId, createdAt: { $gte: todayStart } }) : Promise.resolve([]),
+    ]);
+    const previousTotals = sumNutritionTotals(todayEntries);
+    const oldValue = entry[state.field];
+
     entry[state.field] = value;
     await entry.save();
 
     editingState.delete(telegramId);
 
     await replyWithEntrySummary(ctx, state.entryId, telegramId);
+    if (user && isTodayEntry) {
+      await sendGoalReachedNotification(
+        ctx,
+        previousTotals,
+        { ...previousTotals, [state.field]: previousTotals[state.field] - oldValue + value },
+        user
+      );
+    }
 
     return true;
   } catch (err) {
