@@ -8,10 +8,10 @@ const INTENT_SYSTEM_PROMPT = `Classify Telegram bot user text.
 Return valid JSON only.
 
 Intent "meal_log" means the user wants to record a consumed or planned eating occasion, or gives a direct food/meal description suitable for calorie logging.
-Examples: "съел рис 100 г и курицу", "яблоко 150 г", "на завтрак омлет", "coffee with milk", "2 яйца и хлеб".
+Examples: "ate 100 g rice and chicken", "150 g apple", "omelet for breakfast", "coffee with milk", "2 eggs and bread".
 
 Intent "general" means normal assistant chat, questions, requests, jokes, bot usage questions, or food/nutrition questions that are not asking to log a specific eaten meal.
-Examples: "как дела?", "что такое белок?", "сколько калорий в яблоке?", "помоги написать письмо", "что мне приготовить?", "как пользоваться ботом?".
+Examples: "how are you?", "what is protein?", "how many calories are in an apple?", "help me write an email", "what should I cook?", "how do I use the bot?".
 
 When unsure, use "general" unless the text is clearly a meal entry.`;
 

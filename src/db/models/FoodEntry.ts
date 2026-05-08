@@ -32,7 +32,7 @@ const FoodEntrySchema = new Schema<IFoodEntry>(
   { timestamps: true }
 );
 
-// Индекс для быстрой выборки по юзеру и дате
+// Index for fast lookup by user and date.
 FoodEntrySchema.index({ telegramId: 1, createdAt: -1 });
 
 export const FoodEntry = model<IFoodEntry>('FoodEntry', FoodEntrySchema);

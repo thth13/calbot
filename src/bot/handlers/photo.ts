@@ -12,8 +12,8 @@ const CONFIDENCE_EMOJI: Record<string, string> = {
 };
 
 const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
-  meal: '🍽 Приём пищи',
-  snack: '🥨 Перекус',
+  meal: '🍽 Meal',
+  snack: '🥨 Snack',
 };
 
 const DAILY_TOKEN_LIMIT = 30_000;
@@ -40,7 +40,7 @@ async function processMeal(
     { upsert: true, new: true }
   );
 
-  // Сбрасываем счётчик если новый день
+  // Reset the counter on a new day.
   const resetDate = new Date(user.tokensResetDate);
   resetDate.setHours(0, 0, 0, 0);
   if (resetDate < today) {
@@ -51,8 +51,8 @@ async function processMeal(
 
   if (!isPremiumActive(user.premiumUntil) && user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
     await ctx.reply(
-      '⛔ Ты достиг лимита сканирований на сегодня. Лимиты обновятся завтра.\n\n' +
-        '💎 Premium снимает дневной лимит и открывает расширенную статистику.'
+      "⛔ You've reached today's scan limit. Limits reset tomorrow.\n\n" +
+        '💎 Premium removes the daily limit and unlocks extended stats.'
     );
     return;
   }
@@ -66,11 +66,11 @@ async function processMeal(
 
   if (todayEntriesCount >= dailyEntryLimit) {
     if (premiumActive) {
-      await ctx.reply('⛔ Ты достиг лимита подписки: 100 записей в день. Лимит обновится завтра.');
+      await ctx.reply("⛔ You've reached the subscription limit: 100 entries per day. The limit resets tomorrow.");
     } else {
       await ctx.reply(
-        '⛔ В бесплатной версии доступно только 2 записи в день.\n\n' +
-          'Подключи подписку и веди записи без ограничений.',
+        '⛔ The free version allows only 2 entries per day.\n\n' +
+          'Subscribe to keep logging without limits.',
         { reply_markup: buildPremiumKeyboard(ctx) }
       );
     }
@@ -128,20 +128,20 @@ async function processMeal(
     const remaining = (user.dailyCalorieGoal || 2000) - todayTotal;
     const confidenceLabel = CONFIDENCE_EMOJI[nutrition.confidence] ?? '⚠️';
     const mealTypeLabel = MEAL_TYPE_LABELS[nutrition.mealType];
-    const keyboard = new InlineKeyboard().text('✏️ Редактировать', `edit_entry_${entry._id}`);
+    const keyboard = new InlineKeyboard().text('✏️ Edit', `edit_entry_${entry._id}`);
 
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id);
 
     await ctx.reply(
       `🍽 *${nutrition.foodDescription}*\n\n` +
         `${mealTypeLabel}\n` +
-        `🔥 Калории: *${nutrition.calories} ккал*\n` +
-        `🥩 Белки: ${nutrition.protein}г\n` +
-        `🍞 Углеводы: ${nutrition.carbs}г\n` +
-        `🧈 Жиры: ${nutrition.fat}г\n\n` +
-        `${confidenceLabel} Точность: ${nutrition.confidence}\n\n` +
-        `📊 *Сегодня итого:* ${todayTotal} ккал\n` +
-        `${remaining >= 0 ? `✅ Остаток: ${remaining} ккал` : `⚠️ Превышение: ${Math.abs(remaining)} ккал`}`,
+        `🔥 Calories: *${nutrition.calories} kcal*\n` +
+        `🥩 Protein: ${nutrition.protein}g\n` +
+        `🍞 Carbs: ${nutrition.carbs}g\n` +
+        `🧈 Fat: ${nutrition.fat}g\n\n` +
+        `${confidenceLabel} Confidence: ${nutrition.confidence}\n\n` +
+        `📊 *Today total:* ${todayTotal} kcal\n` +
+        `${remaining >= 0 ? `✅ Remaining: ${remaining} kcal` : `⚠️ Over goal: ${Math.abs(remaining)} kcal`}`,
       { parse_mode: 'Markdown', reply_markup: keyboard }
     );
 
@@ -156,8 +156,8 @@ async function processMeal(
 async function processPhoto(ctx: Context, imageUrl: string, fileId: string, details?: string): Promise<void> {
   await processMeal(ctx, () => analyzeFood(imageUrl, details), {
     photoFileId: fileId,
-    waitText: '🔍 Анализирую еду...',
-    failureText: '❌ Не удалось распознать еду. Попробуй сделать более чёткое фото.',
+    waitText: '🔍 Analyzing food...',
+    failureText: '❌ Could not recognize the food. Try taking a clearer photo.',
   });
 }
 
@@ -166,8 +166,8 @@ export async function handleFoodDescription(ctx: Context): Promise<void> {
   if (!ctx.from || !description) return;
 
   await processMeal(ctx, () => analyzeFoodDescription(description), {
-    waitText: '🔍 Считаю КБЖУ по описанию...',
-    failureText: '❌ Не удалось посчитать КБЖУ по описанию. Попробуй указать продукты и примерный размер порции.',
+    waitText: '🔍 Calculating nutrition from the description...',
+    failureText: '❌ Could not calculate nutrition from the description. Try listing the foods and approximate portions.',
   });
 }
 
@@ -182,13 +182,13 @@ export async function handlePhoto(ctx: Context): Promise<void> {
   const file = await ctx.api.getFile(bestPhoto.file_id);
 
   if (!file.file_path) {
-    await ctx.reply('❌ Не удалось получить файл. Попробуй ещё раз.');
+    await ctx.reply('❌ Could not get the file. Try again.');
     return;
   }
 
   const imageUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
 
-  // Детали учитываются только если они отправлены подписью к фото.
+  // Details are used only when sent as a photo caption.
   const caption = ctx.message?.caption?.trim();
   await processPhoto(ctx, imageUrl, bestPhoto.file_id, caption || undefined);
 }

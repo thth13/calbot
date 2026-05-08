@@ -17,10 +17,10 @@ const GOALS: Array<{
   label: string;
   unit: string;
 }> = [
-  { field: 'calories', goalField: 'dailyCalorieGoal', label: '🔥 Калории', unit: 'ккал' },
-  { field: 'protein', goalField: 'dailyProteinGoal', label: '🥩 Белки', unit: 'г' },
-  { field: 'carbs', goalField: 'dailyCarbsGoal', label: '🍞 Углеводы', unit: 'г' },
-  { field: 'fat', goalField: 'dailyFatGoal', label: '🧈 Жиры', unit: 'г' },
+  { field: 'calories', goalField: 'dailyCalorieGoal', label: '🔥 Calories', unit: 'kcal' },
+  { field: 'protein', goalField: 'dailyProteinGoal', label: '🥩 Protein', unit: 'g' },
+  { field: 'carbs', goalField: 'dailyCarbsGoal', label: '🍞 Carbs', unit: 'g' },
+  { field: 'fat', goalField: 'dailyFatGoal', label: '🧈 Fat', unit: 'g' },
 ];
 
 export function buildGoalReachedMessage(
@@ -38,7 +38,7 @@ export function buildGoalReachedMessage(
 
   if (reachedGoals.length === 0) return null;
 
-  return `🎉 *Норма набрана*\n\n${reachedGoals.join('\n')}`;
+  return `🎉 *Goal reached*\n\n${reachedGoals.join('\n')}`;
 }
 
 export async function sendGoalReachedNotification(

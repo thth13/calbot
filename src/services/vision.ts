@@ -24,7 +24,7 @@ Classify the eating occasion:
 - "meal" if it looks like breakfast, lunch, dinner, a full plate, or a substantial combined dish.
 Return ONLY a JSON object with these exact fields:
 {
-  "foodDescription": "brief description of what you see",
+  "foodDescription": "brief English description of what you see",
   "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,
@@ -37,19 +37,19 @@ Use confidence "low" if image is blurry or food is hard to identify, "high" if c
 const TEXT_USER_PROMPT = `Analyze this user-described meal and estimate nutritional content.
 The user may write in Russian, Ukrainian, English, or a mix of them.
 Classify the eating occasion:
-- "snack" if the user describes a small bite, drink, dessert, fruit, bar, nuts, yogurt, a small sandwich, "перекус", "снек", "snack", or other light food that is not a complete meal;
+- "snack" if the user describes a small bite, drink, dessert, fruit, bar, nuts, yogurt, a small sandwich, "snack", or other light food that is not a complete meal;
 - "meal" if the user describes breakfast, lunch, dinner, a full plate, or a substantial combined dish.
 Treat explicit quantities as authoritative:
-- grams/g/г/гр/грамм mean the exact edible weight of that product;
-- kilograms/kg/кг must be converted to grams and scaled exactly;
-- milliliters/ml/мл and liters/l/л are liquid volume, not grams unless the product density is obvious;
-- pieces/шт/штуки are count-based portions and should use typical item weights only if no gram weight is provided;
+- grams/g and equivalent local-language abbreviations mean the exact edible weight of that product;
+- kilograms/kg and equivalent local-language abbreviations must be converted to grams and scaled exactly;
+- milliliters/ml and liters/l, including equivalent local-language abbreviations, are liquid volume, not grams unless the product density is obvious;
+- pieces/pcs and equivalent local-language abbreviations are count-based portions and should use typical item weights only if no gram weight is provided;
 - if a product has both count and grams, use grams for nutrition scaling.
-Do not replace explicit gram quantities with a "standard serving". If the user says "рис 100 г", estimate nutrition for 100 g rice, not for a full plate.
+Do not replace explicit gram quantities with a "standard serving". If the user says "rice 100 g", estimate nutrition for 100 g rice, not for a full plate.
 If the user lists several products, calculate each product from its own quantity and sum the meal.
 Return ONLY a JSON object with these exact fields:
 {
-  "foodDescription": "brief normalized description of the meal",
+  "foodDescription": "brief normalized English description of the meal",
   "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,
@@ -103,7 +103,7 @@ function parseNutritionResponse(content: string, tokensUsed: number): NutritionR
   const jsonString = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
   const parsed = JSON.parse(jsonString) as NutritionResult;
 
-  // Базовая валидация
+  // Basic validation.
   if (
     typeof parsed.calories !== 'number' ||
     typeof parsed.protein !== 'number' ||

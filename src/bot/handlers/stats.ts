@@ -5,8 +5,8 @@ import { User } from '../../db/models/User.js';
 import { buildPremiumKeyboard, isPremiumActive } from './premium.js';
 
 const MEAL_TYPE_LABELS: Record<MealType, string> = {
-  meal: 'приём пищи',
-  snack: 'перекус',
+  meal: 'meal',
+  snack: 'snack',
 };
 
 function getMealTypeLabel(mealType?: MealType): string {
@@ -14,18 +14,18 @@ function getMealTypeLabel(mealType?: MealType): string {
 }
 
 function formatEntry(entry: { foodDescription: string; mealType?: MealType; calories: number; createdAt: Date }): string {
-  const time = entry.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  return `  • ${time} — ${entry.foodDescription} (${getMealTypeLabel(entry.mealType)}, ${entry.calories} ккал)`;
+  const time = entry.createdAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return `  • ${time} - ${entry.foodDescription} (${getMealTypeLabel(entry.mealType)}, ${entry.calories} kcal)`;
 }
 
 function buildSummaryLine(calories: number, goal: number): string {
   const pct = Math.round((calories / goal) * 100);
   const bar = buildProgressBar(pct);
-  return `${bar} ${pct}% от нормы`;
+  return `${bar} ${pct}% of goal`;
 }
 
 function formatMacroGoal(current: number, goal?: number): string {
-  return goal !== undefined ? `${current}г / ${goal}г` : `${current}г`;
+  return goal !== undefined ? `${current}g / ${goal}g` : `${current}g`;
 }
 
 function buildProgressBar(pct: number): string {
@@ -46,7 +46,7 @@ export async function handleToday(ctx: Context): Promise<void> {
   ]);
 
   if (entries.length === 0) {
-    await ctx.reply('📭 Сегодня записей нет. Отправь фото еды!');
+    await ctx.reply('📭 No entries today. Send a food photo!');
     return;
   }
 
@@ -63,15 +63,15 @@ export async function handleToday(ctx: Context): Promise<void> {
 
   const lines = entries.map(formatEntry).join('\n');
   const goalLine = goal
-    ? `🔥 Калории: *${totals.calories}* / ${goal} ккал\n${buildSummaryLine(totals.calories, goal)}`
-    : `🔥 Калории: *${totals.calories}* ккал _(норма не задана)_`;
+    ? `🔥 Calories: *${totals.calories}* / ${goal} kcal\n${buildSummaryLine(totals.calories, goal)}`
+    : `🔥 Calories: *${totals.calories}* kcal _(goal not set)_`;
   const macroLine =
-    `🥩 Белки: ${formatMacroGoal(totals.protein, user?.dailyProteinGoal)}  |  ` +
-    `🍞 Углеводы: ${formatMacroGoal(totals.carbs, user?.dailyCarbsGoal)}  |  ` +
-    `🧈 Жиры: ${formatMacroGoal(totals.fat, user?.dailyFatGoal)}`;
+    `🥩 Protein: ${formatMacroGoal(totals.protein, user?.dailyProteinGoal)}  |  ` +
+    `🍞 Carbs: ${formatMacroGoal(totals.carbs, user?.dailyCarbsGoal)}  |  ` +
+    `🧈 Fat: ${formatMacroGoal(totals.fat, user?.dailyFatGoal)}`;
 
   await ctx.reply(
-    `📅 *Сегодня, ${new Date().toLocaleDateString('ru-RU')}*\n\n` +
+    `📅 *Today, ${new Date().toLocaleDateString('en-US')}*\n\n` +
       `${lines}\n\n` +
       `─────────────────\n` +
       `${goalLine}\n\n` +
@@ -94,17 +94,17 @@ export async function handleWeek(ctx: Context): Promise<void> {
   ]);
 
   if (entries.length === 0) {
-    await ctx.reply('📭 За последние 7 дней записей нет.');
+    await ctx.reply('📭 No entries in the last 7 days.');
     return;
   }
 
   const goal = user?.dailyCalorieGoal;
 
-  // Группируем по дням
+  // Group by day.
   const byDay = new Map<string, { calories: number; protein: number; carbs: number; fat: number; mealCount: number }>();
 
   for (const e of entries) {
-    const day = e.createdAt.toLocaleDateString('ru-RU');
+    const day = e.createdAt.toLocaleDateString('en-US');
     const cur = byDay.get(day) ?? { calories: 0, protein: 0, carbs: 0, fat: 0, mealCount: 0 };
     byDay.set(day, {
       calories: cur.calories + e.calories,
@@ -120,7 +120,7 @@ export async function handleWeek(ctx: Context): Promise<void> {
       const icon = goal
         ? d.calories > goal ? '🔴' : d.calories > goal * 0.8 ? '🟡' : '🟢'
         : '⚪';
-      return `${icon} ${date}: *${d.calories}* ккал (${d.mealCount} приёма)`;
+      return `${icon} ${date}: *${d.calories}* kcal (${d.mealCount} meals)`;
     })
     .join('\n');
 
@@ -131,13 +131,13 @@ export async function handleWeek(ctx: Context): Promise<void> {
   const days = byDay.size;
 
   await ctx.reply(
-    `📊 *Статистика за 7 дней*\n\n` +
+    `📊 *7-day stats*\n\n` +
       `${dayLines}\n\n` +
       `─────────────────\n` +
-      `📈 Среднее/день: *${Math.round(totalCalories / days)}* ккал\n` +
-      `🔥 Всего: ${totalCalories} ккал\n` +
-      `🥩 Белки: ${totalProtein}г  |  🍞 Углеводы: ${totalCarbs}г  |  🧈 Жиры: ${totalFat}г` +
-      (goal ? `\n\n🟢 < 80% нормы  🟡 80–100%  🔴 > нормы` : ''),
+      `📈 Average/day: *${Math.round(totalCalories / days)}* kcal\n` +
+      `🔥 Total: ${totalCalories} kcal\n` +
+      `🥩 Protein: ${totalProtein}g  |  🍞 Carbs: ${totalCarbs}g  |  🧈 Fat: ${totalFat}g` +
+      (goal ? `\n\n🟢 < 80% of goal  🟡 80-100%  🔴 > goal` : ''),
     { parse_mode: 'Markdown' }
   );
 }
@@ -149,14 +149,14 @@ export async function handleHistory(ctx: Context): Promise<void> {
   const entries = await FoodEntry.find({ telegramId }).sort({ createdAt: -1 }).limit(10);
 
   if (entries.length === 0) {
-    await ctx.reply('📭 История пуста. Отправь фото еды!');
+    await ctx.reply('📭 History is empty. Send a food photo!');
     return;
   }
 
-  await ctx.reply(`📋 *Последние ${entries.length} записей:*`, { parse_mode: 'Markdown' });
+  await ctx.reply(`📋 *Last ${entries.length} entries:*`, { parse_mode: 'Markdown' });
 
   for (const e of entries) {
-    const dt = e.createdAt.toLocaleString('ru-RU', {
+    const dt = e.createdAt.toLocaleString('en-US', {
       day: '2-digit',
       month: '2-digit',
       hour: '2-digit',
@@ -164,12 +164,12 @@ export async function handleHistory(ctx: Context): Promise<void> {
     });
 
     const keyboard = new InlineKeyboard()
-      .text('✏️ Редактировать', `edit_entry_${e._id}`)
-      .text('🗑 Удалить', `delete_entry_${e._id}`);
+      .text('✏️ Edit', `edit_entry_${e._id}`)
+      .text('🗑 Delete', `delete_entry_${e._id}`);
 
     const text =
-      `${dt} — *${e.foodDescription}*\n` +
-      `🔥 ${e.calories} ккал  |  🥩 ${e.protein}г  |  🍞 ${e.carbs}г  |  🧈 ${e.fat}г`;
+      `${dt} - *${e.foodDescription}*\n` +
+      `🔥 ${e.calories} kcal  |  🥩 ${e.protein}g  |  🍞 ${e.carbs}g  |  🧈 ${e.fat}g`;
 
     await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
   }
@@ -182,8 +182,8 @@ export async function handleExtendedStats(ctx: Context): Promise<void> {
   const user = await User.findOne({ telegramId });
   if (!isPremiumActive(user?.premiumUntil)) {
     await ctx.reply(
-      `📈 *Расширенная статистика доступна в Premium*\n\n` +
-        `Premium открывает 30-дневную динамику, средние КБЖУ и анализ дней относительно цели.`,
+      `📈 *Extended stats are available in Premium*\n\n` +
+        `Premium unlocks 30-day trends, average nutrition, and goal-based day analysis.`,
       { parse_mode: 'Markdown', reply_markup: buildPremiumKeyboard(ctx) }
     );
     return;
@@ -196,14 +196,14 @@ export async function handleExtendedStats(ctx: Context): Promise<void> {
   const entries = await FoodEntry.find({ telegramId, createdAt: { $gte: start } }).sort({ createdAt: 1 });
 
   if (entries.length === 0) {
-    await ctx.reply('📭 За последние 30 дней записей нет.');
+    await ctx.reply('📭 No entries in the last 30 days.');
     return;
   }
 
   const byDay = new Map<string, { calories: number; protein: number; carbs: number; fat: number; count: number }>();
 
   for (const entry of entries) {
-    const day = entry.createdAt.toLocaleDateString('ru-RU');
+    const day = entry.createdAt.toLocaleDateString('en-US');
     const current = byDay.get(day) ?? { calories: 0, protein: 0, carbs: 0, fat: 0, count: 0 };
     byDay.set(day, {
       calories: current.calories + entry.calories,
@@ -233,14 +233,14 @@ export async function handleExtendedStats(ctx: Context): Promise<void> {
   const bestDay = Array.from(byDay.entries()).sort((a, b) => b[1].calories - a[1].calories)[0];
 
   await ctx.reply(
-    `📈 *Расширенная статистика за 30 дней*\n\n` +
-      `Дней с записями: *${days}*\n` +
-      `Приёмов пищи: *${totals.count}*\n\n` +
-      `Среднее в день:\n` +
-      `🔥 ${Math.round(totals.calories / days)} ккал\n` +
-      `🥩 ${Math.round(totals.protein / days)}г  |  🍞 ${Math.round(totals.carbs / days)}г  |  🧈 ${Math.round(totals.fat / days)}г\n\n` +
-      (goal ? `Дней около цели: *${goalHits}* из ${days}\n` : `Цель по калориям не задана\n`) +
-      `Самый калорийный день: *${bestDay[0]}* — ${bestDay[1].calories} ккал`,
+    `📈 *30-day extended stats*\n\n` +
+      `Days with entries: *${days}*\n` +
+      `Eating occasions: *${totals.count}*\n\n` +
+      `Daily average:\n` +
+      `🔥 ${Math.round(totals.calories / days)} kcal\n` +
+      `🥩 ${Math.round(totals.protein / days)}g  |  🍞 ${Math.round(totals.carbs / days)}g  |  🧈 ${Math.round(totals.fat / days)}g\n\n` +
+      (goal ? `Days near goal: *${goalHits}* of ${days}\n` : `Calorie goal is not set\n`) +
+      `Highest-calorie day: *${bestDay[0]}* - ${bestDay[1].calories} kcal`,
     { parse_mode: 'Markdown' }
   );
 }

@@ -27,7 +27,7 @@ function buildPremiumUrl(ctx: Context): string {
 
 export function buildPremiumKeyboard(ctx?: Context): InlineKeyboard {
   const webAppUrl = ctx ? buildPremiumUrl(ctx) : getPremiumWebAppUrl();
-  return new InlineKeyboard().webApp('Оформить подписку', webAppUrl);
+  return new InlineKeyboard().webApp('Subscribe', webAppUrl);
 }
 
 export async function handlePremium(ctx: Context): Promise<void> {
@@ -36,16 +36,16 @@ export async function handlePremium(ctx: Context): Promise<void> {
 
   const user = await User.findOne({ telegramId });
   const status = isPremiumActive(user?.premiumUntil)
-    ? `\n\nТвой Premium активен до ${user!.premiumUntil!.toLocaleDateString('ru-RU')}.`
+    ? `\n\nYour Premium is active until ${user!.premiumUntil!.toLocaleDateString('en-US')}.`
     : '';
 
   await ctx.reply(
     `💎 *Premium CalBot*\n\n` +
-      `• Неограниченное количество сканирований\n` +
-      `• Расширенная статистика питания\n\n` +
-      `Тарифы:\n` +
-      `• Месяц — *$9.99*\n` +
-      `• Год — *$99*${status}`,
+      `• Unlimited scans\n` +
+      `• Extended nutrition stats\n\n` +
+      `Plans:\n` +
+      `• Monthly - *$9.99*\n` +
+      `• Yearly - *$99*${status}`,
     { parse_mode: 'Markdown', reply_markup: buildPremiumKeyboard(ctx) }
   );
 }

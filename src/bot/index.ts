@@ -49,11 +49,11 @@ export function createBot(token: string) {
   bot.command('extended', handleExtendedStats);
   bot.command('info', handleInfo);
 
-  bot.hears('📅 Сегодня', handleToday);
-  bot.hears('📊 Неделя', handleWeek);
-  bot.hears('📋 История', handleHistory);
-  bot.hears('📈 Расширенная', handleExtendedStats);
-  bot.hears('👤 Мой профиль', handleGoal);
+  bot.hears('📅 Today', handleToday);
+  bot.hears('📊 Week', handleWeek);
+  bot.hears('📋 History', handleHistory);
+  bot.hears('📈 Extended', handleExtendedStats);
+  bot.hears('👤 My Profile', handleGoal);
   bot.hears('💎 Premium', handlePremium);
 
   // Wizard callbacks

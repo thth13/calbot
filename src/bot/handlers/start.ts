@@ -3,9 +3,9 @@ import { Keyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
 
 export const mainKeyboard = new Keyboard()
-  .text('📅 Сегодня').text('📊 Неделя')
+  .text('📅 Today').text('📊 Week')
   .row()
-  .text('📋 История').text('👤 Мой профиль')
+  .text('📋 History').text('👤 My Profile')
   .resized();
 
 function buildInfoText(firstName?: string): string {

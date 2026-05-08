@@ -65,9 +65,9 @@ const GOAL_ADJUSTMENTS: Record<FitnessGoal, number> = {
 };
 
 const GOAL_LABELS: Record<FitnessGoal, string> = {
-  lose_weight: 'похудение',
-  maintain_weight: 'поддержание веса',
-  gain_muscle: 'набор мышечной массы',
+  lose_weight: 'weight loss',
+  maintain_weight: 'weight maintenance',
+  gain_muscle: 'muscle gain',
 };
 
 const MANUAL_GOAL_USER_FIELDS: Record<ManualGoalField, keyof IUser> = {
@@ -78,10 +78,10 @@ const MANUAL_GOAL_USER_FIELDS: Record<ManualGoalField, keyof IUser> = {
 };
 
 const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
-  sedentary: 'Почти не двигаюсь',
-  light: 'Немного хожу',
-  moderate: 'Средняя активность',
-  active: 'Высокая активность',
+  sedentary: 'Mostly sedentary',
+  light: 'Light walking',
+  moderate: 'Moderate activity',
+  active: 'High activity',
 };
 
 const ACTIVITY_COEFFICIENTS: Record<ActivityLevel, number> = {
@@ -92,18 +92,18 @@ const ACTIVITY_COEFFICIENTS: Record<ActivityLevel, number> = {
 };
 
 const SPORT_TYPE_LABELS: Record<SportType, string> = {
-  strength: 'Силовые тренировки',
-  cardio: 'Кардио',
-  mixed: 'Смешанные тренировки',
-  team: 'Игровой/командный спорт',
-  martial_arts: 'Единоборства',
-  other: 'Другое',
+  strength: 'Strength training',
+  cardio: 'Cardio',
+  mixed: 'Mixed training',
+  team: 'Team sports',
+  martial_arts: 'Martial arts',
+  other: 'Other',
 };
 
 const TRAINING_FREQUENCY_LABELS: Record<TrainingFrequency, string> = {
-  low: '1-2 раза в неделю',
-  medium: '3-4 раза в неделю',
-  high: '5+ раз в неделю',
+  low: '1-2 times per week',
+  medium: '3-4 times per week',
+  high: '5+ times per week',
 };
 
 const TRAINING_FREQUENCY_BONUS: Record<TrainingFrequency, number> = {
@@ -113,10 +113,10 @@ const TRAINING_FREQUENCY_BONUS: Record<TrainingFrequency, number> = {
 };
 
 const TRAINING_DURATION_LABELS: Record<TrainingDuration, string> = {
-  short: 'До 30 минут',
-  medium: '30-60 минут',
-  long: '60-90 минут',
-  extra_long: '90+ минут',
+  short: 'Up to 30 minutes',
+  medium: '30-60 minutes',
+  long: '60-90 minutes',
+  extra_long: '90+ minutes',
 };
 
 const TRAINING_DURATION_BONUS: Record<TrainingDuration, number> = {
@@ -127,11 +127,11 @@ const TRAINING_DURATION_BONUS: Record<TrainingDuration, number> = {
 };
 
 function buildNavKeyboard(): InlineKeyboard {
-  return new InlineKeyboard().text('⬅️ Назад', 'goal_back').text('❌ Отмена', 'goal_cancel');
+  return new InlineKeyboard().text('⬅️ Back', 'goal_back').text('❌ Cancel', 'goal_cancel');
 }
 
 function withNav(kb: InlineKeyboard): InlineKeyboard {
-  return kb.row().text('⬅️ Назад', 'goal_back').text('❌ Отмена', 'goal_cancel');
+  return kb.row().text('⬅️ Back', 'goal_back').text('❌ Cancel', 'goal_cancel');
 }
 
 function moveToStep(telegramId: number, state: WizardState, step: WizardStep): void {
@@ -146,11 +146,11 @@ function roundCalories(value: number): number {
 }
 
 function formatGoalValue(value: number | undefined, suffix: string): string {
-  return value !== undefined ? `${value}${suffix}` : 'не указано';
+  return value !== undefined ? `${value}${suffix}` : 'not set';
 }
 
 function formatNumber(value: number): string {
-  return new Intl.NumberFormat('ru-RU').format(value);
+  return new Intl.NumberFormat('en-US').format(value);
 }
 
 function calculateGoals(state: WizardState): CalculationResult {
@@ -197,28 +197,28 @@ function calculateGoals(state: WizardState): CalculationResult {
     adjustmentPercent,
     warning:
       targetCalories < bmr
-        ? 'Расчёт получился слишком низким. Лучше не опускаться ниже базового обмена без консультации специалиста.'
+        ? 'The calculated target is too low. It is better not to go below your basal metabolic rate without consulting a specialist.'
         : undefined,
   };
 }
 
 function buildManualGoalKeyboard(): InlineKeyboard {
   return new InlineKeyboard()
-    .text('🔥 Калории', 'manual_goal_calories')
-    .text('🥩 Белки', 'manual_goal_protein')
+    .text('🔥 Calories', 'manual_goal_calories')
+    .text('🥩 Protein', 'manual_goal_protein')
     .row()
-    .text('🍚 Углеводы', 'manual_goal_carbs')
-    .text('🥑 Жиры', 'manual_goal_fat');
+    .text('🍚 Carbs', 'manual_goal_carbs')
+    .text('🥑 Fat', 'manual_goal_fat');
 }
 
 function buildManualGoalText(goals: Partial<Record<ManualGoalField, number>>): string {
   return (
-    `✏️ *Ручной ввод нормы*\n\n` +
-    `🔥 Калории: ${formatGoalValue(goals.calories, ' ккал')}\n` +
-    `🥩 Белки: ${formatGoalValue(goals.protein, 'г')}\n` +
-    `🍚 Углеводы: ${formatGoalValue(goals.carbs, 'г')}\n` +
-    `🥑 Жиры: ${formatGoalValue(goals.fat, 'г')}\n\n` +
-    `Выбери кнопкой, что хочешь указать. Значение применится сразу после ввода.`
+    `✏️ *Manual goal entry*\n\n` +
+    `🔥 Calories: ${formatGoalValue(goals.calories, ' kcal')}\n` +
+    `🥩 Protein: ${formatGoalValue(goals.protein, 'g')}\n` +
+    `🍚 Carbs: ${formatGoalValue(goals.carbs, 'g')}\n` +
+    `🥑 Fat: ${formatGoalValue(goals.fat, 'g')}\n\n` +
+    `Choose what you want to set. The value is applied right after you enter it.`
   );
 }
 
@@ -226,46 +226,46 @@ function buildResultText(state: WizardState, result: CalculationResult): string 
   const warning = result.warning ? `\n\n⚠️ ${result.warning}` : '';
 
   return (
-    `🎯 *Твоя дневная норма*\n\n` +
-    `Цель: ${GOAL_LABELS[state.goal!]}\n` +
-    `Калории: *${formatNumber(result.targetCalories)} ккал/день*\n\n` +
-    `БЖУ:\n` +
-    `🥩 Белки: ${result.protein} г\n` +
-    `🥑 Жиры: ${result.fat} г\n` +
-    `🍚 Углеводы: ${result.carbs} г${warning}\n\n` +
-    `Это стартовая точка. Через 2-3 недели можно скорректировать норму по динамике веса и самочувствию.`
+    `🎯 *Your daily goal*\n\n` +
+    `Goal: ${GOAL_LABELS[state.goal!]}\n` +
+    `Calories: *${formatNumber(result.targetCalories)} kcal/day*\n\n` +
+    `Macros:\n` +
+    `🥩 Protein: ${result.protein} g\n` +
+    `🥑 Fat: ${result.fat} g\n` +
+    `🍚 Carbs: ${result.carbs} g${warning}\n\n` +
+    `This is a starting point. After 2-3 weeks, you can adjust it based on weight trends and how you feel.`
   );
 }
 
 function buildResultKeyboard(): InlineKeyboard {
   return new InlineKeyboard()
-    .text('✅ Сохранить норму', 'goal_save')
+    .text('✅ Save goal', 'goal_save')
     .row()
-    .text('✏️ Изменить данные', 'goal_change')
-    .text('🔁 Пройти тест заново', 'goal_restart')
+    .text('✏️ Change data', 'goal_change')
+    .text('🔁 Retake quiz', 'goal_restart')
     .row()
-    .text('🧮 Как это рассчитано?', 'goal_explain')
+    .text('🧮 How is this calculated?', 'goal_explain')
     .row()
-    .text('❌ Отмена', 'goal_cancel');
+    .text('❌ Cancel', 'goal_cancel');
 }
 
 function buildExplanationText(state: WizardState, result: CalculationResult): string {
-  const sign = result.adjustmentPercent > 0 ? 'профицит' : result.adjustmentPercent < 0 ? 'дефицит' : 'без изменения';
+  const sign = result.adjustmentPercent > 0 ? 'surplus' : result.adjustmentPercent < 0 ? 'deficit' : 'no change';
   const percent = Math.abs(Math.round(result.adjustmentPercent * 100));
-  const adjustmentLine = result.adjustmentPercent === 0 ? '0%, поддержание веса' : `${percent}%, ${sign}`;
+  const adjustmentLine = result.adjustmentPercent === 0 ? '0%, weight maintenance' : `${percent}%, ${sign}`;
 
   return (
-    `🧮 *Как это рассчитано*\n\n` +
-    `BMR: *${result.bmr} ккал* по формуле Mifflin-St Jeor\n` +
-    `Коэффициент активности: *${result.activityCoefficient}*\n` +
-    `TDEE: *${result.tdee} ккал*\n` +
-    `Цель: *${GOAL_LABELS[state.goal!]}*\n` +
-    `Коррекция: *${adjustmentLine}*\n\n` +
-    `БЖУ:\n` +
-    `• Белки: ${state.goal === 'lose_weight' ? '2.0' : state.goal === 'gain_muscle' ? '1.8' : '1.6'} г на кг веса\n` +
-    `• Жиры: 0.8 г на кг веса, но в пределах 20-35% калорий\n` +
-    `• Углеводы: оставшиеся калории после белков и жиров\n\n` +
-    `Белки и углеводы считаются по 4 ккал/г, жиры - по 9 ккал/г.`
+    `🧮 *How this is calculated*\n\n` +
+    `BMR: *${result.bmr} kcal* using the Mifflin-St Jeor formula\n` +
+    `Activity coefficient: *${result.activityCoefficient}*\n` +
+    `TDEE: *${result.tdee} kcal*\n` +
+    `Goal: *${GOAL_LABELS[state.goal!]}*\n` +
+    `Adjustment: *${adjustmentLine}*\n\n` +
+    `Macros:\n` +
+    `• Protein: ${state.goal === 'lose_weight' ? '2.0' : state.goal === 'gain_muscle' ? '1.8' : '1.6'} g per kg of body weight\n` +
+    `• Fat: 0.8 g per kg of body weight, within 20-35% of calories\n` +
+    `• Carbs: remaining calories after protein and fat\n\n` +
+    `Protein and carbs are counted as 4 kcal/g, fat as 9 kcal/g.`
   );
 }
 
@@ -273,91 +273,91 @@ function buildProfileInfo(user: IUser | null): string {
   if (!user?.weight || !user?.height || !user?.age || !user?.gender || !user?.activityLevel) return '';
 
   return (
-    `\n\n👤 *Твой профиль:*\n` +
-    `Пол: ${user.gender === 'male' ? 'Мужской' : 'Женский'}\n` +
-    `Возраст: ${user.age} лет\n` +
-    `Рост: ${user.height} см\n` +
-    `Вес: ${user.weight} кг\n` +
-    `Цель: ${user.fitnessGoal ? GOAL_LABELS[user.fitnessGoal] : 'не указана'}\n` +
-    `Активность: ${ACTIVITY_LABELS[user.activityLevel]}`
+    `\n\n👤 *Your profile:*\n` +
+    `Gender: ${user.gender === 'male' ? 'Male' : 'Female'}\n` +
+    `Age: ${user.age}\n` +
+    `Height: ${user.height} cm\n` +
+    `Weight: ${user.weight} kg\n` +
+    `Goal: ${user.fitnessGoal ? GOAL_LABELS[user.fitnessGoal] : 'not set'}\n` +
+    `Activity: ${ACTIVITY_LABELS[user.activityLevel]}`
   );
 }
 
 async function askGender(ctx: Context): Promise<void> {
   const kb = new InlineKeyboard()
-    .text('Мужской', 'gender_male')
-    .text('Женский', 'gender_female')
+    .text('Male', 'gender_male')
+    .text('Female', 'gender_female')
     .row()
-    .text('❌ Отмена', 'goal_cancel');
+    .text('❌ Cancel', 'goal_cancel');
 
-  await ctx.reply('Шаг 1 — Укажи пол:', { reply_markup: kb });
+  await ctx.reply('Step 1 - Select your gender:', { reply_markup: kb });
 }
 
 async function askGoal(ctx: Context): Promise<void> {
   const kb = new InlineKeyboard()
-    .text('Похудение', 'goal_type_lose_weight')
+    .text('Weight loss', 'goal_type_lose_weight')
     .row()
-    .text('Поддержание веса', 'goal_type_maintain_weight')
+    .text('Weight maintenance', 'goal_type_maintain_weight')
     .row()
-    .text('Набор мышечной массы', 'goal_type_gain_muscle');
+    .text('Muscle gain', 'goal_type_gain_muscle');
 
-  await ctx.reply('Шаг 5 — Какая цель?', { reply_markup: withNav(kb) });
+  await ctx.reply('Step 5 - What is your goal?', { reply_markup: withNav(kb) });
 }
 
 async function askActivity(ctx: Context): Promise<void> {
   const kb = new InlineKeyboard()
-    .text('Почти не двигаюсь', 'activity_sedentary')
+    .text('Mostly sedentary', 'activity_sedentary')
     .row()
-    .text('Немного хожу', 'activity_light')
+    .text('Light walking', 'activity_light')
     .row()
-    .text('Средняя активность', 'activity_moderate')
+    .text('Moderate activity', 'activity_moderate')
     .row()
-    .text('Высокая активность', 'activity_active');
+    .text('High activity', 'activity_active');
 
-  await ctx.reply('Шаг 6 — Уровень повседневной активности:', { reply_markup: withNav(kb) });
+  await ctx.reply('Step 6 - Daily activity level:', { reply_markup: withNav(kb) });
 }
 
 async function askSport(ctx: Context): Promise<void> {
-  const kb = new InlineKeyboard().text('Нет', 'sport_no').text('Да', 'sport_yes');
-  await ctx.reply('Шаг 7 — Занимаешься спортом?', { reply_markup: withNav(kb) });
+  const kb = new InlineKeyboard().text('No', 'sport_no').text('Yes', 'sport_yes');
+  await ctx.reply('Step 7 - Do you exercise?', { reply_markup: withNav(kb) });
 }
 
 async function askSportType(ctx: Context): Promise<void> {
   const kb = new InlineKeyboard()
-    .text('Силовые', 'sport_type_strength')
-    .text('Кардио', 'sport_type_cardio')
+    .text('Strength', 'sport_type_strength')
+    .text('Cardio', 'sport_type_cardio')
     .row()
-    .text('Смешанные', 'sport_type_mixed')
-    .text('Командный спорт', 'sport_type_team')
+    .text('Mixed', 'sport_type_mixed')
+    .text('Team sports', 'sport_type_team')
     .row()
-    .text('Единоборства', 'sport_type_martial_arts')
-    .text('Другое', 'sport_type_other');
+    .text('Martial arts', 'sport_type_martial_arts')
+    .text('Other', 'sport_type_other');
 
-  await ctx.reply('Шаг 8 — Какой тип спорта?', { reply_markup: withNav(kb) });
+  await ctx.reply('Step 8 - What type of exercise?', { reply_markup: withNav(kb) });
 }
 
 async function askTrainingFrequency(ctx: Context): Promise<void> {
   const kb = new InlineKeyboard()
-    .text('1-2 раза в неделю', 'training_frequency_low')
+    .text('1-2 times per week', 'training_frequency_low')
     .row()
-    .text('3-4 раза в неделю', 'training_frequency_medium')
+    .text('3-4 times per week', 'training_frequency_medium')
     .row()
-    .text('5+ раз в неделю', 'training_frequency_high');
+    .text('5+ times per week', 'training_frequency_high');
 
-  await ctx.reply('Шаг 9 — Как часто тренируешься?', { reply_markup: withNav(kb) });
+  await ctx.reply('Step 9 - How often do you train?', { reply_markup: withNav(kb) });
 }
 
 async function askTrainingDuration(ctx: Context): Promise<void> {
   const kb = new InlineKeyboard()
-    .text('До 30 минут', 'training_duration_short')
+    .text('Up to 30 minutes', 'training_duration_short')
     .row()
-    .text('30-60 минут', 'training_duration_medium')
+    .text('30-60 minutes', 'training_duration_medium')
     .row()
-    .text('60-90 минут', 'training_duration_long')
+    .text('60-90 minutes', 'training_duration_long')
     .row()
-    .text('90+ минут', 'training_duration_extra_long');
+    .text('90+ minutes', 'training_duration_extra_long');
 
-  await ctx.reply('Шаг 10 — Сколько длится обычная тренировка?', { reply_markup: withNav(kb) });
+  await ctx.reply('Step 10 - How long is a typical workout?', { reply_markup: withNav(kb) });
 }
 
 async function showResult(ctx: Context, telegramId: number, state: WizardState): Promise<void> {
@@ -383,20 +383,20 @@ export async function handleGoal(ctx: Context): Promise<void> {
     user?.dailyCarbsGoal !== undefined ||
     user?.dailyFatGoal !== undefined;
   const currentLine = hasAnyGoal
-    ? `Текущая норма:\n` +
-      `🔥 ${formatGoalValue(user?.dailyCalorieGoal, ' ккал')}\n` +
-      `🥩 ${formatGoalValue(user?.dailyProteinGoal, 'г')}  |  ` +
-      `🍚 ${formatGoalValue(user?.dailyCarbsGoal, 'г')}  |  ` +
-      `🥑 ${formatGoalValue(user?.dailyFatGoal, 'г')}`
-    : `Норма не установлена`;
+    ? `Current goal:\n` +
+      `🔥 ${formatGoalValue(user?.dailyCalorieGoal, ' kcal')}\n` +
+      `🥩 ${formatGoalValue(user?.dailyProteinGoal, 'g')}  |  ` +
+      `🍚 ${formatGoalValue(user?.dailyCarbsGoal, 'g')}  |  ` +
+      `🥑 ${formatGoalValue(user?.dailyFatGoal, 'g')}`
+    : `Goal is not set`;
 
   const kb = new InlineKeyboard()
-    .text('📋 Пройти тест', 'goal_calc')
+    .text('📋 Take quiz', 'goal_calc')
     .row()
-    .text('✏️ Ввести вручную', 'goal_manual');
+    .text('✏️ Enter manually', 'goal_manual');
 
   await ctx.reply(
-    `🎯 *Дневная норма калорий*\n\n${currentLine}${buildProfileInfo(user)}\n\nИзменить норму`,
+    `🎯 *Daily calorie goal*\n\n${currentLine}${buildProfileInfo(user)}\n\nChange goal`,
     { parse_mode: 'Markdown', reply_markup: kb }
   );
 }
@@ -418,7 +418,7 @@ export async function handleGoalBackCallback(ctx: Context): Promise<void> {
   const state = wizardState.get(telegramId);
   const previousStep = state?.history?.pop();
   if (!state || !previousStep) {
-    await ctx.reply('Это первый шаг теста.', { reply_markup: buildNavKeyboard() });
+    await ctx.reply('This is the first step of the quiz.', { reply_markup: buildNavKeyboard() });
     return;
   }
 
@@ -427,15 +427,15 @@ export async function handleGoalBackCallback(ctx: Context): Promise<void> {
 
   if (previousStep === 'gender') return askGender(ctx);
   if (previousStep === 'age') {
-    await ctx.reply('Шаг 2 — Сколько тебе лет? Введи число от 13 до 90:', { reply_markup: buildNavKeyboard() });
+    await ctx.reply('Step 2 - How old are you? Enter a number from 13 to 90:', { reply_markup: buildNavKeyboard() });
     return;
   }
   if (previousStep === 'height') {
-    await ctx.reply('Шаг 3 — Рост в сантиметрах. Введи число от 120 до 230:', { reply_markup: buildNavKeyboard() });
+    await ctx.reply('Step 3 - Height in centimeters. Enter a number from 120 to 230:', { reply_markup: buildNavKeyboard() });
     return;
   }
   if (previousStep === 'weight') {
-    await ctx.reply('Шаг 4 — Вес в килограммах. Введи число от 30 до 250:', { reply_markup: buildNavKeyboard() });
+    await ctx.reply('Step 4 - Weight in kilograms. Enter a number from 30 to 250:', { reply_markup: buildNavKeyboard() });
     return;
   }
   if (previousStep === 'goal') return askGoal(ctx);
@@ -449,8 +449,8 @@ export async function handleGoalBackCallback(ctx: Context): Promise<void> {
 export async function handleGoalCancelCallback(ctx: Context): Promise<void> {
   const telegramId = ctx.from?.id;
   if (telegramId) wizardState.delete(telegramId);
-  await ctx.answerCallbackQuery({ text: 'Тест отменён' });
-  await ctx.reply('❌ Тест отменён. Норма не изменилась.');
+  await ctx.answerCallbackQuery({ text: 'Quiz canceled' });
+  await ctx.reply('❌ Quiz canceled. Your goal was not changed.');
 }
 
 export async function handleGenderCallback(ctx: Context, gender: Gender): Promise<void> {
@@ -463,7 +463,7 @@ export async function handleGenderCallback(ctx: Context, gender: Gender): Promis
 
   state.gender = gender;
   moveToStep(telegramId, state, 'age');
-  await ctx.reply('Шаг 2 — Сколько тебе лет? Введи число от 13 до 90:', { reply_markup: buildNavKeyboard() });
+  await ctx.reply('Step 2 - How old are you? Enter a number from 13 to 90:', { reply_markup: buildNavKeyboard() });
 }
 
 export async function handleGoalTypeCallback(ctx: Context, goal: FitnessGoal): Promise<void> {
@@ -556,7 +556,7 @@ export async function handleGoalSaveCallback(ctx: Context): Promise<void> {
 
   const state = wizardState.get(telegramId);
   if (!state?.result || !state.gender || !state.age || !state.height || !state.weight || !state.goal || !state.activityLevel) {
-    await ctx.answerCallbackQuery({ text: 'Сначала пройди тест', show_alert: true });
+    await ctx.answerCallbackQuery({ text: 'Take the quiz first', show_alert: true });
     return;
   }
 
@@ -588,8 +588,8 @@ export async function handleGoalSaveCallback(ctx: Context): Promise<void> {
   );
 
   wizardState.delete(telegramId);
-  await ctx.answerCallbackQuery({ text: '✅ Норма сохранена' });
-  await ctx.reply('✅ Норма сохранена. Теперь дневная статистика будет сравниваться с этой целью.');
+  await ctx.answerCallbackQuery({ text: '✅ Goal saved' });
+  await ctx.reply('✅ Goal saved. Daily stats will now be compared with this target.');
 }
 
 export async function handleGoalChangeCallback(ctx: Context): Promise<void> {
@@ -603,7 +603,7 @@ export async function handleGoalChangeCallback(ctx: Context): Promise<void> {
   state.step = 'weight';
   state.history = ['gender', 'age', 'height'];
   wizardState.set(telegramId, state);
-  await ctx.reply('Что меняем в первую очередь: вес. Введи актуальный вес в кг от 30 до 250:', {
+  await ctx.reply('First, update your weight. Enter your current weight in kg from 30 to 250:', {
     reply_markup: buildNavKeyboard(),
   });
 }
@@ -618,7 +618,7 @@ export async function handleGoalExplainCallback(ctx: Context): Promise<void> {
 
   const state = wizardState.get(telegramId);
   if (!state?.result) {
-    await ctx.answerCallbackQuery({ text: 'Сначала рассчитай норму', show_alert: true });
+    await ctx.answerCallbackQuery({ text: 'Calculate your goal first', show_alert: true });
     return;
   }
 
@@ -671,14 +671,14 @@ export async function handleManualGoalFieldCallback(ctx: Context): Promise<void>
   wizardState.set(telegramId, state);
 
   const labels: Record<ManualGoalField, string> = {
-    calories: 'калорий в ккал',
-    protein: 'белков в граммах',
-    carbs: 'углеводов в граммах',
-    fat: 'жиров в граммах',
+    calories: 'calories in kcal',
+    protein: 'protein in grams',
+    carbs: 'carbs in grams',
+    fat: 'fat in grams',
   };
 
   await ctx.answerCallbackQuery();
-  await ctx.reply(`Введи значение для ${labels[field]}:`);
+  await ctx.reply(`Enter a value for ${labels[field]}:`);
 }
 
 export async function handleManualGoalSaveCallback(ctx: Context): Promise<void> {
@@ -690,7 +690,7 @@ export async function handleManualGoalSaveCallback(ctx: Context): Promise<void> 
   const hasAnyGoal = Object.values(goals).some((value) => value !== undefined);
 
   if (!hasAnyGoal) {
-    await ctx.answerCallbackQuery({ text: 'Сначала укажи хотя бы одно значение', show_alert: true });
+    await ctx.answerCallbackQuery({ text: 'Set at least one value first', show_alert: true });
     return;
   }
 
@@ -708,13 +708,13 @@ export async function handleManualGoalSaveCallback(ctx: Context): Promise<void> 
   );
 
   wizardState.delete(telegramId);
-  await ctx.answerCallbackQuery({ text: '✅ Норма сохранена' });
+  await ctx.answerCallbackQuery({ text: '✅ Goal saved' });
   await ctx.reply(
-    `✅ *Дневная норма сохранена*\n\n` +
-      `🔥 ${formatGoalValue(goals.calories, ' ккал')}\n` +
-      `🥩 ${formatGoalValue(goals.protein, 'г')}  |  ` +
-      `🍚 ${formatGoalValue(goals.carbs, 'г')}  |  ` +
-      `🥑 ${formatGoalValue(goals.fat, 'г')}`,
+    `✅ *Daily goal saved*\n\n` +
+      `🔥 ${formatGoalValue(goals.calories, ' kcal')}\n` +
+      `🥩 ${formatGoalValue(goals.protein, 'g')}  |  ` +
+      `🍚 ${formatGoalValue(goals.carbs, 'g')}  |  ` +
+      `🥑 ${formatGoalValue(goals.fat, 'g')}`,
     { parse_mode: 'Markdown' }
   );
 }
@@ -724,8 +724,8 @@ export async function handleManualGoalCancelCallback(ctx: Context): Promise<void
   if (telegramId) {
     wizardState.delete(telegramId);
   }
-  await ctx.answerCallbackQuery({ text: '❌ Ручной ввод отменён' });
-  await ctx.reply('❌ Ручной ввод отменён.');
+  await ctx.answerCallbackQuery({ text: '❌ Manual entry canceled' });
+  await ctx.reply('❌ Manual entry canceled.');
 }
 
 export async function handleWizardMessage(ctx: Context): Promise<boolean> {
@@ -746,17 +746,17 @@ export async function handleWizardMessage(ctx: Context): Promise<boolean> {
     const field = state.manualField;
     const value = Number(text.replace(',', '.'));
     if (Number.isNaN(value)) {
-      await ctx.reply('❌ Введи число.');
+      await ctx.reply('❌ Enter a number.');
       return true;
     }
 
     if (field === 'calories' && (value < 500 || value > 10000)) {
-      await ctx.reply('❌ Калории должны быть от 500 до 10000.');
+      await ctx.reply('❌ Calories must be between 500 and 10000.');
       return true;
     }
 
     if (field !== 'calories' && (value < 0 || value > 1000)) {
-      await ctx.reply('❌ Белки, углеводы и жиры должны быть от 0 до 1000 г.');
+      await ctx.reply('❌ Protein, carbs, and fat must be between 0 and 1000 g.');
       return true;
     }
 
@@ -783,24 +783,24 @@ export async function handleWizardMessage(ctx: Context): Promise<boolean> {
   if (state.step === 'age') {
     const age = Number(text.replace(',', '.'));
     if (!Number.isInteger(age) || age < 13 || age > 90) {
-      await ctx.reply('❌ Введи возраст числом от 13 до 90:', { reply_markup: buildNavKeyboard() });
+      await ctx.reply('❌ Enter your age as a number from 13 to 90:', { reply_markup: buildNavKeyboard() });
       return true;
     }
     state.age = age;
     moveToStep(telegramId, state, 'height');
-    await ctx.reply('Шаг 3 — Рост в сантиметрах. Введи число от 120 до 230:', { reply_markup: buildNavKeyboard() });
+    await ctx.reply('Step 3 - Height in centimeters. Enter a number from 120 to 230:', { reply_markup: buildNavKeyboard() });
     return true;
   }
 
   if (state.step === 'height') {
     const height = Number(text.replace(',', '.'));
     if (!Number.isInteger(height) || height < 120 || height > 230) {
-      await ctx.reply('❌ Введи рост в сантиметрах числом от 120 до 230:', { reply_markup: buildNavKeyboard() });
+      await ctx.reply('❌ Enter your height in centimeters as a number from 120 to 230:', { reply_markup: buildNavKeyboard() });
       return true;
     }
     state.height = height;
     moveToStep(telegramId, state, 'weight');
-    await ctx.reply('Шаг 4 — Вес в килограммах. Можно с десятичной дробью, например 72.5:', {
+    await ctx.reply('Step 4 - Weight in kilograms. Decimals are allowed, for example 72.5:', {
       reply_markup: buildNavKeyboard(),
     });
     return true;
@@ -809,7 +809,7 @@ export async function handleWizardMessage(ctx: Context): Promise<boolean> {
   if (state.step === 'weight') {
     const weight = Number(text.replace(',', '.'));
     if (Number.isNaN(weight) || weight < 30 || weight > 250) {
-      await ctx.reply('❌ Введи вес в кг числом от 30 до 250:', { reply_markup: buildNavKeyboard() });
+      await ctx.reply('❌ Enter your weight in kg as a number from 30 to 250:', { reply_markup: buildNavKeyboard() });
       return true;
     }
     state.weight = Math.round(weight * 10) / 10;
@@ -818,6 +818,6 @@ export async function handleWizardMessage(ctx: Context): Promise<boolean> {
     return true;
   }
 
-  await ctx.reply('Выбери вариант кнопкой ниже или нажми “Назад” / “Отмена”.');
+  await ctx.reply('Choose an option below or tap "Back" / "Cancel".');
   return true;
 }
