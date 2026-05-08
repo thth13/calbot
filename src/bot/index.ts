@@ -1,6 +1,6 @@
-import { Bot } from 'grammy';
+import { Bot, Context } from 'grammy';
 import { answerGeneralQuestion, classifyTextMessageIntent } from '../services/assistant.js';
-import { handleInfo, handleStart, mainKeyboard } from './handlers/start.js';
+import { handleInfo, handleStart } from './handlers/start.js';
 import { handleFoodDescription, handlePhoto } from './handlers/photo.js';
 import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
 import { handlePremium } from './handlers/premium.js';
@@ -37,6 +37,49 @@ import {
   handleSetMealType,
   editingState,
 } from './handlers/manage.js';
+
+type TextCommandHandler = (ctx: Context) => Promise<void>;
+
+const TEXT_COMMAND_HANDLERS = new Map<string, TextCommandHandler>([
+  ['today', handleToday],
+  ['сегодня', handleToday],
+  ['📅 today', handleToday],
+  ['📅 сегодня', handleToday],
+  ['week', handleWeek],
+  ['неделя', handleWeek],
+  ['📊 week', handleWeek],
+  ['📊 неделя', handleWeek],
+  ['history', handleHistory],
+  ['история', handleHistory],
+  ['📋 history', handleHistory],
+  ['📋 история', handleHistory],
+  ['stats', handleToday],
+  ['statistics', handleToday],
+  ['статистика', handleToday],
+  ['📊 статистика', handleToday],
+  ['extended', handleExtendedStats],
+  ['расширенная статистика', handleExtendedStats],
+  ['📈 extended', handleExtendedStats],
+  ['📈 расширенная статистика', handleExtendedStats],
+  ['my profile', handleGoal],
+  ['profile', handleGoal],
+  ['профиль', handleGoal],
+  ['мой профиль', handleGoal],
+  ['👤 my profile', handleGoal],
+  ['👤 мой профиль', handleGoal],
+  ['premium', handlePremium],
+  ['премиум', handlePremium],
+  ['💎 premium', handlePremium],
+  ['💎 премиум', handlePremium],
+  ['info', handleInfo],
+  ['help', handleInfo],
+  ['инфо', handleInfo],
+  ['помощь', handleInfo],
+]);
+
+function normalizeTextCommand(text: string): string {
+  return text.trim().replace(/\s+/g, ' ').toLowerCase();
+}
 
 export function createBot(token: string) {
   const bot = new Bot(token);
@@ -101,7 +144,7 @@ export function createBot(token: string) {
   bot.callbackQuery(/^set_meal_type_(.+)_(meal|snack)$/, handleSetMealType);
   bot.callbackQuery(/^cancel_edit_(.+)$/, handleCancelEdit);
 
-  // Route text messages: editing state takes priority, then wizard
+  // Route text messages: editing state takes priority, then wizard and known commands.
   bot.on('message:text', async (ctx, next) => {
     const telegramId = ctx.from?.id;
     if (telegramId) {
@@ -115,6 +158,12 @@ export function createBot(token: string) {
       }
     }
     if (ctx.message.text.startsWith('/')) return next();
+
+    const commandHandler = TEXT_COMMAND_HANDLERS.get(normalizeTextCommand(ctx.message.text));
+    if (commandHandler) {
+      await commandHandler(ctx);
+      return;
+    }
 
     try {
       const intent = await classifyTextMessageIntent(ctx.message.text);
