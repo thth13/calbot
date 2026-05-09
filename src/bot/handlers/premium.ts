@@ -1,10 +1,10 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
 
-const DEFAULT_PREMIUM_WEBAPP_URL = 'https://calbot-web-self.vercel.app/premium';
+const DEFAULT_WEBAPP_URL = 'https://calbot-web-self.vercel.app';
 
-function getPremiumWebAppUrl(): string {
-  return process.env.PREMIUM_WEBAPP_URL ?? process.env.WEBAPP_URL ?? DEFAULT_PREMIUM_WEBAPP_URL;
+function getWebAppUrl(): string {
+  return process.env.WEBAPP_URL ?? DEFAULT_WEBAPP_URL;
 }
 
 export function isPremiumActive(premiumUntil?: Date): boolean {
@@ -12,7 +12,7 @@ export function isPremiumActive(premiumUntil?: Date): boolean {
 }
 
 function buildPremiumUrl(ctx: Context): string {
-  const url = new URL(getPremiumWebAppUrl());
+  const url = new URL('/premium', getWebAppUrl());
   const from = ctx.from;
   const chat = ctx.chat;
 
@@ -26,7 +26,7 @@ function buildPremiumUrl(ctx: Context): string {
 }
 
 export function buildPremiumKeyboard(ctx?: Context): InlineKeyboard {
-  const webAppUrl = ctx ? buildPremiumUrl(ctx) : getPremiumWebAppUrl();
+  const webAppUrl = ctx ? buildPremiumUrl(ctx) : new URL('/premium', getWebAppUrl()).toString();
   return new InlineKeyboard().webApp('Subscribe', webAppUrl);
 }
 
