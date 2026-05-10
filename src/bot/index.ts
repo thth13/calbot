@@ -37,6 +37,7 @@ import {
   handleSetMealType,
   editingState,
 } from './handlers/manage.js';
+import { handleWeightUpdateMessage } from './weightTracking.js';
 
 type TextCommandHandler = (ctx: Context) => Promise<void>;
 
@@ -144,7 +145,7 @@ export function createBot(token: string) {
   bot.callbackQuery(/^set_meal_type_(.+)_(meal|snack)$/, handleSetMealType);
   bot.callbackQuery(/^cancel_edit_(.+)$/, handleCancelEdit);
 
-  // Route text messages: editing state takes priority, then wizard and known commands.
+  // Route text messages: editing state takes priority, then wizard, weekly weight updates, and known commands.
   bot.on('message:text', async (ctx, next) => {
     const telegramId = ctx.from?.id;
     if (telegramId) {
@@ -156,6 +157,8 @@ export function createBot(token: string) {
         const handled = await handleWizardMessage(ctx);
         if (handled) return;
       }
+      const handledWeightUpdate = await handleWeightUpdateMessage(ctx);
+      if (handledWeightUpdate) return;
     }
     if (ctx.message.text.startsWith('/')) return next();
 

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { connectDB } from './db/connection.js';
 import { createBot } from './bot/index.js';
+import { startWeeklyWeightPrompts } from './bot/weightTracking.js';
 
 async function main() {
   const token = process.env.BOT_TOKEN;
@@ -9,6 +10,7 @@ async function main() {
   await connectDB();
 
   const bot = createBot(token);
+  startWeeklyWeightPrompts(bot);
   await bot.start({
     onStart: (info) => console.log(`Bot @${info.username} started`),
   });

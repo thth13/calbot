@@ -7,6 +7,11 @@ export type SportType = 'strength' | 'cardio' | 'mixed' | 'team' | 'martial_arts
 export type TrainingFrequency = 'low' | 'medium' | 'high';
 export type TrainingDuration = 'short' | 'medium' | 'long' | 'extra_long';
 
+export interface WeightEntry {
+  weight: number;
+  measuredAt: Date;
+}
+
 export interface IUser extends Document {
   telegramId: number;
   username?: string;
@@ -15,6 +20,9 @@ export interface IUser extends Document {
   premiumPlan?: 'monthly' | 'yearly';
   dailyCalorieGoal: number;
   weight?: number;
+  weightHistory: WeightEntry[];
+  nextWeightPromptAt?: Date;
+  awaitingWeightUpdate?: boolean;
   height?: number;
   age?: number;
   gender?: Gender;
@@ -45,6 +53,17 @@ const UserSchema = new Schema<IUser>(
     premiumPlan: { type: String, enum: ['monthly', 'yearly'] },
     dailyCalorieGoal: { type: Number },
     weight: { type: Number },
+    weightHistory: {
+      type: [
+        {
+          weight: { type: Number, required: true },
+          measuredAt: { type: Date, required: true },
+        },
+      ],
+      default: [],
+    },
+    nextWeightPromptAt: { type: Date },
+    awaitingWeightUpdate: { type: Boolean, default: false },
     height: { type: Number },
     age: { type: Number },
     gender: { type: String, enum: ['male', 'female'] },

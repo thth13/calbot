@@ -9,6 +9,7 @@ import {
   User,
 } from '../../db/models/User.js';
 import type { IUser } from '../../db/models/User.js';
+import { getNextWeightPromptAt } from '../weightTracking.js';
 
 type WizardStep =
   | 'gender'
@@ -560,6 +561,8 @@ export async function handleGoalSaveCallback(ctx: Context): Promise<void> {
     return;
   }
 
+  const measuredAt = new Date();
+
   await User.findOneAndUpdate(
     { telegramId },
     {
@@ -582,6 +585,14 @@ export async function handleGoalSaveCallback(ctx: Context): Promise<void> {
         tdee: state.result.tdee,
         activityCoefficient: state.result.activityCoefficient,
         calorieAdjustmentPercent: state.result.adjustmentPercent,
+        nextWeightPromptAt: getNextWeightPromptAt(measuredAt),
+        awaitingWeightUpdate: false,
+      },
+      $push: {
+        weightHistory: {
+          weight: state.weight,
+          measuredAt,
+        },
       },
     },
     { upsert: true }
@@ -589,7 +600,7 @@ export async function handleGoalSaveCallback(ctx: Context): Promise<void> {
 
   wizardState.delete(telegramId);
   await ctx.answerCallbackQuery({ text: '✅ Goal saved' });
-  await ctx.reply('✅ Goal saved. Daily stats will now be compared with this target.');
+  await ctx.reply('✅ Goal saved. I also saved your current weight and will ask for a new weight once a week.');
 }
 
 export async function handleGoalChangeCallback(ctx: Context): Promise<void> {
