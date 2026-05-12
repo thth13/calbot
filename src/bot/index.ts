@@ -5,6 +5,12 @@ import { handleFoodDescription, handlePhoto } from './handlers/photo.js';
 import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
 import { handlePremium } from './handlers/premium.js';
 import {
+  bodyMeasurementInputState,
+  handleBodyMeasurementMessage,
+  handleBodyMeasurements,
+  handleBodyMeasurementSelectCallback,
+} from './handlers/bodyMeasurements.js';
+import {
   handleActivityCallback,
   handleGenderCallback,
   handleGoal,
@@ -37,7 +43,7 @@ import {
   handleSetMealType,
   editingState,
 } from './handlers/manage.js';
-import { handleWeightUpdateMessage } from './weightTracking.js';
+import { handleBodyMeasurementUpdateMessage, handleWeightUpdateMessage } from './weightTracking.js';
 
 type TextCommandHandler = (ctx: Context) => Promise<void>;
 
@@ -115,6 +121,9 @@ export function createBot(token: string) {
   bot.callbackQuery(/^manual_goal_(calories|protein|carbs|fat)$/, handleManualGoalFieldCallback);
   bot.callbackQuery('manual_goal_save', handleManualGoalSaveCallback);
   bot.callbackQuery('manual_goal_cancel', handleManualGoalCancelCallback);
+  bot.callbackQuery('body_measurements', handleBodyMeasurements);
+  bot.callbackQuery('body_measurements_back', handleGoal);
+  bot.callbackQuery(/^body_measurement_(.+)$/, handleBodyMeasurementSelectCallback);
   bot.callbackQuery('gender_male', (ctx) => handleGenderCallback(ctx, 'male'));
   bot.callbackQuery('gender_female', (ctx) => handleGenderCallback(ctx, 'female'));
   bot.callbackQuery('activity_sedentary', (ctx) => handleActivityCallback(ctx, 'sedentary'));
@@ -153,12 +162,18 @@ export function createBot(token: string) {
         const handled = await handleEditFieldValue(ctx);
         if (handled) return;
       }
+      if (bodyMeasurementInputState.has(telegramId)) {
+        const handled = await handleBodyMeasurementMessage(ctx);
+        if (handled) return;
+      }
       if (wizardState.has(telegramId)) {
         const handled = await handleWizardMessage(ctx);
         if (handled) return;
       }
       const handledWeightUpdate = await handleWeightUpdateMessage(ctx);
       if (handledWeightUpdate) return;
+      const handledBodyMeasurementUpdate = await handleBodyMeasurementUpdateMessage(ctx);
+      if (handledBodyMeasurementUpdate) return;
     }
     if (ctx.message.text.startsWith('/')) return next();
 

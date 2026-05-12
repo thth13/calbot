@@ -376,6 +376,7 @@ async function showResult(ctx: Context, telegramId: number, state: WizardState):
 export async function handleGoal(ctx: Context): Promise<void> {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
+  if (ctx.callbackQuery) await ctx.answerCallbackQuery();
 
   const user = await User.findOne({ telegramId });
   const hasAnyGoal =
@@ -394,7 +395,9 @@ export async function handleGoal(ctx: Context): Promise<void> {
   const kb = new InlineKeyboard()
     .text('📋 Take quiz', 'goal_calc')
     .row()
-    .text('✏️ Enter manually', 'goal_manual');
+    .text('✏️ Enter manually', 'goal_manual')
+    .row()
+    .text('📏 Body measurements', 'body_measurements');
 
   await ctx.reply(
     `🎯 *Daily calorie goal*\n\n${currentLine}${buildProfileInfo(user)}\n\nChange goal`,

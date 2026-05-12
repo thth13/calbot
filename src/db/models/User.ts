@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import type { BodyMeasurementType } from './BodyMeasurement.js';
 
 export type Gender = 'male' | 'female';
 export type FitnessGoal = 'lose_weight' | 'maintain_weight' | 'gain_muscle';
@@ -23,6 +24,9 @@ export interface IUser extends Document {
   weightHistory: WeightEntry[];
   nextWeightPromptAt?: Date;
   awaitingWeightUpdate?: boolean;
+  awaitingBodyMeasurementUpdate?: boolean;
+  pendingBodyMeasurementTypes?: BodyMeasurementType[];
+  pendingBodyMeasurementIndex?: number;
   height?: number;
   age?: number;
   gender?: Gender;
@@ -64,6 +68,9 @@ const UserSchema = new Schema<IUser>(
     },
     nextWeightPromptAt: { type: Date },
     awaitingWeightUpdate: { type: Boolean, default: false },
+    awaitingBodyMeasurementUpdate: { type: Boolean, default: false },
+    pendingBodyMeasurementTypes: { type: [String], default: [] },
+    pendingBodyMeasurementIndex: { type: Number, default: 0 },
     height: { type: Number },
     age: { type: Number },
     gender: { type: String, enum: ['male', 'female'] },
