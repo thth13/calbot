@@ -17,8 +17,21 @@ const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
 };
 
 const DAILY_TOKEN_LIMIT = 30_000;
-const FREE_DAILY_ENTRY_LIMIT = 2;
 const PREMIUM_DAILY_ENTRY_LIMIT = 100;
+const FREE_TRIAL_DAYS = 3;
+
+function getFreeTrialExpiresAt(user: { createdAt?: Date }): Date | undefined {
+  if (!user.createdAt) {
+    return undefined;
+  }
+
+  return new Date(user.createdAt.getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000);
+}
+
+function isFreeTrialActive(user: { createdAt?: Date }, now = new Date()): boolean {
+  const expiresAt = getFreeTrialExpiresAt(user);
+  return Boolean(expiresAt && expiresAt.getTime() > now.getTime());
+}
 
 async function processMeal(
   ctx: Context,
@@ -49,7 +62,17 @@ async function processMeal(
     await user.save();
   }
 
-  if (!isPremiumActive(user) && user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
+  const premiumActive = isPremiumActive(user);
+  if (!premiumActive && !isFreeTrialActive(user)) {
+    await ctx.reply(
+      '⛔ Your free 3-day trial has ended.\n\n' +
+        'Subscribe to keep scanning meals.',
+      { reply_markup: buildPremiumKeyboard(ctx) }
+    );
+    return;
+  }
+
+  if (!premiumActive && user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
     await ctx.reply(
       "⛔ You've reached today's scan limit. Limits reset tomorrow.\n\n" +
         '💎 Premium removes the daily limit and unlocks extended stats.'
@@ -57,23 +80,13 @@ async function processMeal(
     return;
   }
 
-  const premiumActive = isPremiumActive(user);
-  const dailyEntryLimit = premiumActive ? PREMIUM_DAILY_ENTRY_LIMIT : FREE_DAILY_ENTRY_LIMIT;
   const todayEntriesCount = await FoodEntry.countDocuments({
     telegramId: tgUser.id,
     createdAt: { $gte: today },
   });
 
-  if (todayEntriesCount >= dailyEntryLimit) {
-    if (premiumActive) {
-      await ctx.reply("⛔ You've reached the subscription limit: 100 entries per day. The limit resets tomorrow.");
-    } else {
-      await ctx.reply(
-        '⛔ The free version allows only 2 entries per day.\n\n' +
-          'Subscribe to keep logging without limits.',
-        { reply_markup: buildPremiumKeyboard(ctx) }
-      );
-    }
+  if (premiumActive && todayEntriesCount >= PREMIUM_DAILY_ENTRY_LIMIT) {
+    await ctx.reply("⛔ You've reached the subscription limit: 100 entries per day. The limit resets tomorrow.");
     return;
   }
 
