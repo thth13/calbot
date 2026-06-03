@@ -18,6 +18,10 @@ function formatEntry(entry: { foodDescription: string; mealType?: MealType; calo
   return `  • ${time} - ${entry.foodDescription} (${getMealTypeLabel(entry.mealType)}, ${entry.calories} kcal)`;
 }
 
+function formatNumber(value: number): string {
+  return Number(value.toFixed(2)).toString();
+}
+
 function buildSummaryLine(calories: number, goal: number): string {
   const pct = Math.round((calories / goal) * 100);
   const bar = buildProgressBar(pct);
@@ -25,7 +29,7 @@ function buildSummaryLine(calories: number, goal: number): string {
 }
 
 function formatMacroGoal(current: number, goal?: number): string {
-  return goal !== undefined ? `${current}g / ${goal}g` : `${current}g`;
+  return goal !== undefined ? `${formatNumber(current)}g / ${formatNumber(goal)}g` : `${formatNumber(current)}g`;
 }
 
 function buildProgressBar(pct: number): string {
@@ -136,7 +140,7 @@ export async function handleWeek(ctx: Context): Promise<void> {
       `─────────────────\n` +
       `📈 Average/day: *${Math.round(totalCalories / days)}* kcal\n` +
       `🔥 Total: ${totalCalories} kcal\n` +
-      `🥩 Protein: ${totalProtein}g  |  🍞 Carbs: ${totalCarbs}g  |  🧈 Fat: ${totalFat}g` +
+      `🥩 Protein: ${formatNumber(totalProtein)}g  |  🍞 Carbs: ${formatNumber(totalCarbs)}g  |  🧈 Fat: ${formatNumber(totalFat)}g` +
       (goal ? `\n\n🟢 < 80% of goal  🟡 80-100%  🔴 > goal` : ''),
     { parse_mode: 'Markdown' }
   );
@@ -169,7 +173,7 @@ export async function handleHistory(ctx: Context): Promise<void> {
 
     const text =
       `${dt} - *${e.foodDescription}*\n` +
-      `🔥 ${e.calories} kcal  |  🥩 ${e.protein}g  |  🍞 ${e.carbs}g  |  🧈 ${e.fat}g`;
+      `🔥 ${formatNumber(e.calories)} kcal  |  🥩 ${formatNumber(e.protein)}g  |  🍞 ${formatNumber(e.carbs)}g  |  🧈 ${formatNumber(e.fat)}g`;
 
     await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
   }
@@ -238,7 +242,7 @@ export async function handleExtendedStats(ctx: Context): Promise<void> {
       `Eating occasions: *${totals.count}*\n\n` +
       `Daily average:\n` +
       `🔥 ${Math.round(totals.calories / days)} kcal\n` +
-      `🥩 ${Math.round(totals.protein / days)}g  |  🍞 ${Math.round(totals.carbs / days)}g  |  🧈 ${Math.round(totals.fat / days)}g\n\n` +
+      `🥩 ${formatNumber(totals.protein / days)}g  |  🍞 ${formatNumber(totals.carbs / days)}g  |  🧈 ${formatNumber(totals.fat / days)}g\n\n` +
       (goal ? `Days near goal: *${goalHits}* of ${days}\n` : `Calorie goal is not set\n`) +
       `Highest-calorie day: *${bestDay[0]}* - ${bestDay[1].calories} kcal`,
     { parse_mode: 'Markdown' }

@@ -33,6 +33,10 @@ function isFreeTrialActive(user: { createdAt?: Date }, now = new Date()): boolea
   return Boolean(expiresAt && expiresAt.getTime() > now.getTime());
 }
 
+function formatNumber(value: number): string {
+  return Number(value.toFixed(2)).toString();
+}
+
 async function processMeal(
   ctx: Context,
   analyze: () => Promise<NutritionResult>,
@@ -148,13 +152,13 @@ async function processMeal(
     await ctx.reply(
       `🍽 *${nutrition.foodDescription}*\n\n` +
         `${mealTypeLabel}\n` +
-        `🔥 Calories: *${nutrition.calories} kcal*\n` +
-        `🥩 Protein: ${nutrition.protein}g\n` +
-        `🍞 Carbs: ${nutrition.carbs}g\n` +
-        `🧈 Fat: ${nutrition.fat}g\n\n` +
+        `🔥 Calories: *${formatNumber(nutrition.calories)} kcal*\n` +
+        `🥩 Protein: ${formatNumber(nutrition.protein)}g\n` +
+        `🍞 Carbs: ${formatNumber(nutrition.carbs)}g\n` +
+        `🧈 Fat: ${formatNumber(nutrition.fat)}g\n\n` +
         `${confidenceLabel} Confidence: ${nutrition.confidence}\n\n` +
-        `📊 *Today total:* ${todayTotal} kcal\n` +
-        `${remaining >= 0 ? `✅ Remaining: ${remaining} kcal` : `⚠️ Over goal: ${Math.abs(remaining)} kcal`}`,
+        `📊 *Today total:* ${formatNumber(todayTotal)} kcal\n` +
+        `${remaining >= 0 ? `✅ Remaining: ${formatNumber(remaining)} kcal` : `⚠️ Over goal: ${formatNumber(Math.abs(remaining))} kcal`}`,
       { parse_mode: 'Markdown', reply_markup: keyboard }
     );
 

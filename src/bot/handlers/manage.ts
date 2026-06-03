@@ -42,6 +42,10 @@ function sumNutritionTotals(entries: Array<Pick<NutritionTotals, (typeof NUTRITI
   );
 }
 
+function formatNumber(value: number): string {
+  return Number(value.toFixed(2)).toString();
+}
+
 export async function handleDeleteEntry(ctx: Context): Promise<void> {
   const entryId = ctx.match instanceof Array ? ctx.match[1] : ctx.match as string;
   const telegramId = ctx.from?.id;
@@ -84,8 +88,8 @@ export async function handleEditEntryStart(ctx: Context): Promise<void> {
     `✏️ *Edit entry*\n\n` +
       `${entry.foodDescription}\n` +
       `${MEAL_TYPE_LABELS[entry.mealType ?? 'meal']}\n` +
-      `🔥 ${entry.calories} kcal\n` +
-      `🥩 ${entry.protein}g  |  🍞 ${entry.carbs}g  |  🧈 ${entry.fat}g\n\n` +
+      `🔥 ${formatNumber(entry.calories)} kcal\n` +
+      `🥩 ${formatNumber(entry.protein)}g  |  🍞 ${formatNumber(entry.carbs)}g  |  🧈 ${formatNumber(entry.fat)}g\n\n` +
       `Choose what you want to change:`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
@@ -119,13 +123,13 @@ async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: 
   await ctx.reply(
     `🍽 *${entry.foodDescription}*\n\n` +
       `${mealTypeLabel}\n` +
-      `🔥 Calories: *${entry.calories} kcal*\n` +
-      `🥩 Protein: ${entry.protein}g\n` +
-      `🍞 Carbs: ${entry.carbs}g\n` +
-      `🧈 Fat: ${entry.fat}g\n\n` +
+      `🔥 Calories: *${formatNumber(entry.calories)} kcal*\n` +
+      `🥩 Protein: ${formatNumber(entry.protein)}g\n` +
+      `🍞 Carbs: ${formatNumber(entry.carbs)}g\n` +
+      `🧈 Fat: ${formatNumber(entry.fat)}g\n\n` +
       `${confidenceLabel} Confidence: ${entry.confidence}\n\n` +
-      `📊 *Today total:* ${todayTotal} kcal\n` +
-      `${remaining >= 0 ? `✅ Remaining: ${remaining} kcal` : `⚠️ Over goal: ${Math.abs(remaining)} kcal`}`,
+      `📊 *Today total:* ${formatNumber(todayTotal)} kcal\n` +
+      `${remaining >= 0 ? `✅ Remaining: ${formatNumber(remaining)} kcal` : `⚠️ Over goal: ${formatNumber(Math.abs(remaining))} kcal`}`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 }
