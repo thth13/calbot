@@ -180,7 +180,7 @@ export async function handleExtendedStats(ctx: Context): Promise<void> {
   if (!telegramId) return;
 
   const user = await User.findOne({ telegramId });
-  if (!isPremiumActive(user?.premiumUntil)) {
+  if (!isPremiumActive(user)) {
     await ctx.reply(
       `📈 *Extended stats are available in Premium*\n\n` +
         `Premium unlocks 30-day trends, average nutrition, and goal-based day analysis.`,

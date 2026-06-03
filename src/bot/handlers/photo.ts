@@ -49,7 +49,7 @@ async function processMeal(
     await user.save();
   }
 
-  if (!isPremiumActive(user.premiumUntil) && user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
+  if (!isPremiumActive(user) && user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
     await ctx.reply(
       "⛔ You've reached today's scan limit. Limits reset tomorrow.\n\n" +
         '💎 Premium removes the daily limit and unlocks extended stats.'
@@ -57,7 +57,7 @@ async function processMeal(
     return;
   }
 
-  const premiumActive = isPremiumActive(user.premiumUntil);
+  const premiumActive = isPremiumActive(user);
   const dailyEntryLimit = premiumActive ? PREMIUM_DAILY_ENTRY_LIMIT : FREE_DAILY_ENTRY_LIMIT;
   const todayEntriesCount = await FoodEntry.countDocuments({
     telegramId: tgUser.id,
@@ -82,7 +82,7 @@ async function processMeal(
   try {
     const nutrition = await analyze();
 
-    if (!isPremiumActive(user.premiumUntil)) {
+    if (!isPremiumActive(user)) {
       user.dailyTokensUsed += nutrition.tokensUsed;
     }
     user.tokensResetDate = today;

@@ -17,8 +17,14 @@ export interface IUser extends Document {
   telegramId: number;
   username?: string;
   firstName?: string;
-  premiumUntil?: Date;
-  premiumPlan?: 'monthly' | 'yearly';
+  premium?: {
+    active?: boolean;
+    status?: string;
+    provider?: string;
+    plan?: 'monthly' | 'yearly' | string;
+    expiresAt?: Date;
+    updatedAt?: Date;
+  };
   dailyCalorieGoal: number;
   weight?: number;
   weightHistory: WeightEntry[];
@@ -53,8 +59,14 @@ const UserSchema = new Schema<IUser>(
     telegramId: { type: Number, required: true, unique: true, index: true },
     username: { type: String },
     firstName: { type: String },
-    premiumUntil: { type: Date },
-    premiumPlan: { type: String, enum: ['monthly', 'yearly'] },
+    premium: {
+      active: { type: Boolean },
+      status: { type: String },
+      provider: { type: String },
+      plan: { type: String },
+      expiresAt: { type: Date },
+      updatedAt: { type: Date },
+    },
     dailyCalorieGoal: { type: Number },
     weight: { type: Number },
     weightHistory: {

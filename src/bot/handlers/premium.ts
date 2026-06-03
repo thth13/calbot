@@ -1,5 +1,6 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
+import type { IUser } from '../../db/models/User.js';
 
 const DEFAULT_WEBAPP_URL = 'https://calbot-web-self.vercel.app';
 
@@ -7,8 +8,22 @@ function getWebAppUrl(): string {
   return process.env.WEBAPP_URL ?? DEFAULT_WEBAPP_URL;
 }
 
-export function isPremiumActive(premiumUntil?: Date): boolean {
-  return Boolean(premiumUntil && premiumUntil.getTime() > Date.now());
+export function isPremiumActive(user?: Pick<IUser, 'premium'> | null): boolean {
+  if (user?.premium?.active !== true) {
+    return false;
+  }
+
+  const expiresAt = user.premium.expiresAt;
+  return !expiresAt || expiresAt.getTime() > Date.now();
+}
+
+function formatPremiumStatus(user?: Pick<IUser, 'premium'> | null): string {
+  if (!isPremiumActive(user)) {
+    return '';
+  }
+
+  const expiresAt = user?.premium?.expiresAt;
+  return expiresAt ? `\n\nYour Premium is active until ${expiresAt.toLocaleDateString('en-US')}.` : '\n\nYour Premium is active.';
 }
 
 function buildPremiumUrl(ctx: Context): string {
@@ -35,9 +50,7 @@ export async function handlePremium(ctx: Context): Promise<void> {
   if (!telegramId) return;
 
   const user = await User.findOne({ telegramId });
-  const status = isPremiumActive(user?.premiumUntil)
-    ? `\n\nYour Premium is active until ${user!.premiumUntil!.toLocaleDateString('en-US')}.`
-    : '';
+  const status = formatPremiumStatus(user);
 
   await ctx.reply(
     `💎 *Premium CalBot*\n\n` +
