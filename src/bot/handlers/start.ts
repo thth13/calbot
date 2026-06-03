@@ -17,6 +17,7 @@ function buildInfoText(firstName?: string): string {
     `• 📸 a food photo — I'll estimate calories and nutritional value from the image (some inaccuracy is possible)\n` +
     `• 📝 text — just write what you ate and how much: the more precise your description, the more accurate the estimate\n` +
     `• 📸 + 📝 a photo with a description — this is the most accurate option\n\n` +
+    `🎁 You get a free 3-day trial period to try CalBot.\n\n` +
     `📊 You don't have to describe everything in detail, but if you add what is on the plate and how much, the result will be more accurate.`
   );
 }
