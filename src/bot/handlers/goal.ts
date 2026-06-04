@@ -373,12 +373,28 @@ async function showResult(ctx: Context, telegramId: number, state: WizardState):
   });
 }
 
-export async function handleGoal(ctx: Context): Promise<void> {
-  const telegramId = ctx.from?.id;
-  if (!telegramId) return;
-  if (ctx.callbackQuery) await ctx.answerCallbackQuery();
+function buildGoalSelectionKeyboard(includeBodyMeasurements = true): InlineKeyboard {
+  const kb = new InlineKeyboard()
+    .text('📋 Take quiz', 'goal_calc')
+    .row()
+    .text('✏️ Enter manually', 'goal_manual');
 
-  const user = await User.findOne({ telegramId });
+  if (includeBodyMeasurements) {
+    kb.row().text('📏 Body measurements', 'body_measurements');
+  }
+
+  return kb;
+}
+
+export async function sendOnboardingGoalPrompt(ctx: Context): Promise<void> {
+  await ctx.reply(
+    `🎯 Let's set your daily nutrition goals.\n\n` +
+      `Take a short quiz so I can calculate calories and macros for you, or enter your targets manually.`,
+    { reply_markup: buildGoalSelectionKeyboard(false) }
+  );
+}
+
+export async function sendGoalSetupPrompt(ctx: Context, user: IUser | null = null): Promise<void> {
   const hasAnyGoal =
     user?.dailyCalorieGoal !== undefined ||
     user?.dailyProteinGoal !== undefined ||
@@ -392,17 +408,19 @@ export async function handleGoal(ctx: Context): Promise<void> {
       `🥑 ${formatGoalValue(user?.dailyFatGoal, 'g')}`
     : `Goal is not set`;
 
-  const kb = new InlineKeyboard()
-    .text('📋 Take quiz', 'goal_calc')
-    .row()
-    .text('✏️ Enter manually', 'goal_manual')
-    .row()
-    .text('📏 Body measurements', 'body_measurements');
-
   await ctx.reply(
     `🎯 *Daily calorie goal*\n\n${currentLine}${buildProfileInfo(user)}\n\nChange goal`,
-    { parse_mode: 'Markdown', reply_markup: kb }
+    { parse_mode: 'Markdown', reply_markup: buildGoalSelectionKeyboard() }
   );
+}
+
+export async function handleGoal(ctx: Context): Promise<void> {
+  const telegramId = ctx.from?.id;
+  if (!telegramId) return;
+  if (ctx.callbackQuery) await ctx.answerCallbackQuery();
+
+  const user = await User.findOne({ telegramId });
+  await sendGoalSetupPrompt(ctx, user);
 }
 
 export async function handleGoalCalcCallback(ctx: Context): Promise<void> {

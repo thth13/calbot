@@ -1,6 +1,7 @@
 import { Context } from 'grammy';
 import { Keyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
+import { sendOnboardingGoalPrompt } from './goal.js';
 
 export const mainKeyboard = new Keyboard()
   .text('📅 Today').text('📊 Week')
@@ -26,6 +27,7 @@ export async function handleStart(ctx: Context): Promise<void> {
   const tgUser = ctx.from;
   if (!tgUser) return;
 
+  const existingUser = await User.findOne({ telegramId: tgUser.id });
   await User.findOneAndUpdate(
     { telegramId: tgUser.id },
     {
@@ -40,6 +42,10 @@ export async function handleStart(ctx: Context): Promise<void> {
     buildInfoText(tgUser.first_name) + `\n\nUse the buttons below to view your stats and profile.`,
     { parse_mode: 'Markdown', reply_markup: mainKeyboard }
   );
+
+  if (!existingUser) {
+    await sendOnboardingGoalPrompt(ctx);
+  }
 }
 
 export async function handleInfo(ctx: Context): Promise<void> {
