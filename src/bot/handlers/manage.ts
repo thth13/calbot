@@ -3,6 +3,7 @@ import type { MealType } from '../../db/models/FoodEntry.js';
 import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
 import { NutritionTotals, sendGoalReachedNotification } from '../goalNotifications.js';
+import { recordBotEvent } from '../analytics.js';
 
 const MEAL_TYPE_LABELS: Record<MealType, string> = {
   meal: '🍽 Meal',
@@ -58,6 +59,7 @@ export async function handleDeleteEntry(ctx: Context): Promise<void> {
   }
 
   await ctx.answerCallbackQuery({ text: '✅ Entry deleted' });
+  await recordBotEvent(ctx, 'entry_deleted', { entryId });
   await ctx.reply('🗑 Entry deleted. Stats updated.');
 }
 
@@ -201,6 +203,7 @@ export async function handleSetMealType(ctx: Context): Promise<void> {
   editingState.delete(telegramId);
 
   await ctx.answerCallbackQuery({ text: '✅ Meal type updated' });
+  await recordBotEvent(ctx, 'entry_edited', { entryId, field: 'mealType' });
   await replyWithEntrySummary(ctx, entryId, telegramId);
 }
 
@@ -239,6 +242,7 @@ export async function handleEditFieldValue(ctx: Context): Promise<boolean> {
 
     editingState.delete(telegramId);
 
+    await recordBotEvent(ctx, 'entry_edited', { entryId: state.entryId, field: state.field });
     await replyWithEntrySummary(ctx, state.entryId, telegramId);
     if (user && isTodayEntry) {
       await sendGoalReachedNotification(

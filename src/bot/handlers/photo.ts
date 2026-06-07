@@ -4,6 +4,7 @@ import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
 import { NutritionTotals, sendGoalReachedNotification } from '../goalNotifications.js';
 import { buildPremiumKeyboard, isPremiumActive } from './premium.js';
+import { recordBotEvent } from '../analytics.js';
 
 const CONFIDENCE_EMOJI: Record<string, string> = {
   high: '✅',
@@ -116,6 +117,13 @@ async function processMeal(
       fat: nutrition.fat,
       confidence: nutrition.confidence,
       photoFileId: options.photoFileId,
+    });
+
+    await recordBotEvent(ctx, 'meal_logged', {
+      entryId: String(entry._id),
+      mealType: entry.mealType,
+      hasPhoto: Boolean(options.photoFileId),
+      calories: entry.calories,
     });
 
     const todayStart = new Date();

@@ -1,6 +1,7 @@
 import { Context, InlineKeyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
 import type { IUser } from '../../db/models/User.js';
+import { recordBotEvent } from '../analytics.js';
 
 const DEFAULT_WEBAPP_URL = 'https://calbot-web-self.vercel.app';
 
@@ -52,6 +53,8 @@ export async function handlePremium(ctx: Context): Promise<void> {
   const user = await User.findOne({ telegramId });
   const status = formatPremiumStatus(user);
 
+  await recordBotEvent(ctx, 'premium_offer_shown');
+
   await ctx.reply(
     `💎 *Premium CalBot*\n\n` +
       `• Unlimited scans\n` +
@@ -61,4 +64,23 @@ export async function handlePremium(ctx: Context): Promise<void> {
       `• Yearly - *$99*${status}`,
     { parse_mode: 'Markdown', reply_markup: buildPremiumKeyboard(ctx) }
   );
+}
+
+export async function handlePremiumWebAppData(ctx: Context): Promise<void> {
+  const data = ctx.message?.web_app_data?.data;
+  if (!data) return;
+
+  try {
+    const payload = JSON.parse(data) as { event?: string; plan?: string; source?: string };
+    if (payload.event !== 'premium_purchase_clicked') {
+      return;
+    }
+
+    await recordBotEvent(ctx, 'premium_purchase_clicked', {
+      plan: payload.plan,
+      source: payload.source,
+    });
+  } catch (err) {
+    console.error('Premium web app data parse error:', err);
+  }
 }

@@ -2,6 +2,7 @@ import { Context } from 'grammy';
 import { Keyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
 import { sendOnboardingGoalPrompt } from './goal.js';
+import { recordBotEvent } from '../analytics.js';
 
 export const mainKeyboard = new Keyboard()
   .text('📅 Today').text('📊 Week')
@@ -44,6 +45,7 @@ export async function handleStart(ctx: Context): Promise<void> {
   );
 
   if (!existingUser) {
+    await recordBotEvent(ctx, 'registration');
     await sendOnboardingGoalPrompt(ctx);
   }
 }

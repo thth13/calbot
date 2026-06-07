@@ -3,7 +3,9 @@ import { answerGeneralQuestion, classifyTextMessageIntent } from '../services/as
 import { handleInfo, handleStart } from './handlers/start.js';
 import { handleFoodDescription, handlePhoto } from './handlers/photo.js';
 import { handleToday, handleWeek, handleHistory, handleExtendedStats } from './handlers/stats.js';
-import { handlePremium } from './handlers/premium.js';
+import { handlePremium, handlePremiumWebAppData } from './handlers/premium.js';
+import { trackBotEvent } from './analytics.js';
+import { handleAdminStats } from './handlers/adminStats.js';
 import {
   bodyMeasurementInputState,
   handleBodyMeasurementMessage,
@@ -91,6 +93,8 @@ function normalizeTextCommand(text: string): string {
 export function createBot(token: string) {
   const bot = new Bot(token);
 
+  bot.use(trackBotEvent);
+
   bot.command('start', handleStart);
   bot.command('today', handleToday);
   bot.command('week', handleWeek);
@@ -98,6 +102,7 @@ export function createBot(token: string) {
   bot.command('premium', handlePremium);
   bot.command('extended', handleExtendedStats);
   bot.command('info', handleInfo);
+  bot.command('admin_stats', handleAdminStats);
 
   bot.hears('📅 Today', handleToday);
   bot.hears('📊 Week', handleWeek);
@@ -199,6 +204,7 @@ export function createBot(token: string) {
   });
 
   bot.on('message:photo', handlePhoto);
+  bot.on('message:web_app_data', handlePremiumWebAppData);
 
   bot.catch((err) => {
     console.error('Bot error:', err.error);
