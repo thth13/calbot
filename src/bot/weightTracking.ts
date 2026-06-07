@@ -10,6 +10,10 @@ import { User } from '../db/models/User.js';
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const PROMPT_INTERVAL_MS = 60 * 60 * 1000;
 
+export interface WeeklyWeightPromptScheduler {
+  stop(): void;
+}
+
 function parseWeight(text: string): number | null {
   const value = Number(text.trim().replace(',', '.'));
   if (Number.isNaN(value) || value < 30 || value > 250) return null;
@@ -182,7 +186,7 @@ export async function handleBodyMeasurementUpdateMessage(ctx: Context): Promise<
   return true;
 }
 
-export function startWeeklyWeightPrompts(bot: Bot): NodeJS.Timeout {
+export function startWeeklyWeightPrompts(bot: Bot): WeeklyWeightPromptScheduler {
   let running = false;
 
   const run = async () => {
@@ -233,6 +237,13 @@ export function startWeeklyWeightPrompts(bot: Bot): NodeJS.Timeout {
     }
   };
 
-  setTimeout(run, 5000);
-  return setInterval(run, PROMPT_INTERVAL_MS);
+  const startupTimeout = setTimeout(run, 5000);
+  const interval = setInterval(run, PROMPT_INTERVAL_MS);
+
+  return {
+    stop() {
+      clearTimeout(startupTimeout);
+      clearInterval(interval);
+    },
+  };
 }

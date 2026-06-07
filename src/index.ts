@@ -10,7 +10,21 @@ async function main() {
   await connectDB();
 
   const bot = createBot(token);
-  startWeeklyWeightPrompts(bot);
+  const weeklyWeightPrompts = startWeeklyWeightPrompts(bot);
+  let shuttingDown = false;
+
+  const shutdown = async (signal: NodeJS.Signals) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+
+    console.log(`Received ${signal}, stopping bot...`);
+    weeklyWeightPrompts.stop();
+    await bot.stop();
+  };
+
+  process.once('SIGINT', () => void shutdown('SIGINT'));
+  process.once('SIGTERM', () => void shutdown('SIGTERM'));
+
   await bot.start({
     onStart: (info) => console.log(`Bot @${info.username} started`),
   });
