@@ -18,6 +18,8 @@ const DEFAULT_NOTIFICATION_EVENTS = new Set<BotEventType>([
   'entry_deleted',
 ]);
 
+const IGNORED_USER_TELEGRAM_IDS = new Set([782328120, 1835555772]);
+
 function getNotificationBotToken(): string | undefined {
   return process.env.ADMIN_NOTIFICATION_BOT_TOKEN;
 }
@@ -72,7 +74,10 @@ function formatAdminNotification(event: AdminNotification): string {
 }
 
 export async function sendAdminNotification(event: AdminNotification): Promise<void> {
-  if (!shouldSendNotification(event.type)) {
+  if (
+    !shouldSendNotification(event.type) ||
+    (event.telegramId !== undefined && IGNORED_USER_TELEGRAM_IDS.has(event.telegramId))
+  ) {
     return;
   }
 
