@@ -4,6 +4,19 @@ import { FoodEntry } from '../../db/models/FoodEntry.js';
 import { User } from '../../db/models/User.js';
 import { isAdmin } from '../analytics.js';
 
+const EVENT_LABELS: Record<string, string> = {
+  registration: 'реєстрація',
+  command: 'команда',
+  text_message: 'текстове повідомлення',
+  photo_message: 'фото',
+  callback_query: 'натискання кнопки',
+  meal_logged: 'прийом їжі записано',
+  entry_edited: 'запис відредаговано',
+  entry_deleted: 'запис видалено',
+  premium_offer_shown: 'показано пропозицію Premium',
+  premium_purchase_clicked: 'натиснуто купівлю Premium',
+};
+
 function startOfToday(): Date {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -22,15 +35,15 @@ async function countSince(model: { countDocuments: (filter: Record<string, unkno
 
 function formatEventCounts(counts: Array<{ _id: string; count: number }>): string {
   if (counts.length === 0) {
-    return 'No actions yet';
+    return 'Дій ще немає';
   }
 
-  return counts.map((item) => `• ${item._id}: ${item.count}`).join('\n');
+  return counts.map((item) => `• ${EVENT_LABELS[item._id] ?? item._id}: ${item.count}`).join('\n');
 }
 
 export async function handleAdminStats(ctx: Context): Promise<void> {
   if (!isAdmin(ctx)) {
-    await ctx.reply('Access denied.');
+    await ctx.reply('Доступ заборонено.');
     return;
   }
 
@@ -79,31 +92,31 @@ export async function handleAdminStats(ctx: Context): Promise<void> {
       ? latestUsers
           .map((user) => {
             const name = user.username ? `@${user.username}` : user.firstName ?? String(user.telegramId);
-            return `• ${name} - ${user.createdAt.toLocaleString('en-US')}`;
+            return `• ${name} — ${user.createdAt.toLocaleString('uk-UA')}`;
           })
           .join('\n')
-      : 'No users yet';
+      : 'Користувачів ще немає';
 
   await ctx.reply(
-    `Admin stats\n\n` +
-      `Users\n` +
-      `• Total: ${totalUsers}\n` +
-      `• Today: ${todayUsers}\n` +
-      `• 7 days: ${weekUsers}\n` +
-      `• 30 days: ${monthUsers}\n\n` +
-      `Food entries\n` +
-      `• Total: ${totalEntries}\n` +
-      `• Today: ${todayEntries}\n` +
-      `• 7 days: ${weekEntries}\n` +
-      `• 30 days: ${monthEntries}\n\n` +
-      `Actions\n` +
-      `• Today: ${todayActions}\n` +
-      `• 7 days: ${weekActions}\n` +
-      `• 30 days: ${monthActions}\n` +
-      `• Active users 7d: ${activeUsers7d.length}\n\n` +
-      `Actions by type, 7d\n` +
+    `Статистика адміністратора\n\n` +
+      `Користувачі\n` +
+      `• Усього: ${totalUsers}\n` +
+      `• Сьогодні: ${todayUsers}\n` +
+      `• За 7 днів: ${weekUsers}\n` +
+      `• За 30 днів: ${monthUsers}\n\n` +
+      `Записи про їжу\n` +
+      `• Усього: ${totalEntries}\n` +
+      `• Сьогодні: ${todayEntries}\n` +
+      `• За 7 днів: ${weekEntries}\n` +
+      `• За 30 днів: ${monthEntries}\n\n` +
+      `Дії\n` +
+      `• Сьогодні: ${todayActions}\n` +
+      `• За 7 днів: ${weekActions}\n` +
+      `• За 30 днів: ${monthActions}\n` +
+      `• Активні користувачі за 7 днів: ${activeUsers7d.length}\n\n` +
+      `Дії за типами за 7 днів\n` +
       `${formatEventCounts(actionCounts)}\n\n` +
-      `Latest registrations\n` +
+      `Останні реєстрації\n` +
       latestUsersText
   );
 }

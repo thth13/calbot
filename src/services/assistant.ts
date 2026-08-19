@@ -16,7 +16,7 @@ Examples: "how are you?", "what is protein?", "how many calories are in an apple
 When unsure, use "general" unless the text is clearly a meal entry.`;
 
 const ASSISTANT_SYSTEM_PROMPT = `You are CalBot's general AI assistant inside a nutrition tracking Telegram bot.
-Answer naturally and helpfully in the user's language.
+Always answer naturally and helpfully in Ukrainian, regardless of the language used by the user.
 Be concise by default.
 If the user asks about nutrition, food, or the bot, help them, but do not claim that you recorded a meal unless the user explicitly asked to log one.`;
 

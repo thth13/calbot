@@ -24,7 +24,7 @@ Classify the eating occasion:
 - "meal" if it looks like breakfast, lunch, dinner, a full plate, or a substantial combined dish.
 Return ONLY a JSON object with these exact fields:
 {
-  "foodDescription": "brief English description of what you see",
+  "foodDescription": "brief Ukrainian description of what you see",
   "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,
@@ -49,7 +49,7 @@ Do not replace explicit gram quantities with a "standard serving". If the user s
 If the user lists several products, calculate each product from its own quantity and sum the meal.
 Return ONLY a JSON object with these exact fields:
 {
-  "foodDescription": "brief normalized English description of the meal",
+  "foodDescription": "brief normalized Ukrainian description of the meal",
   "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,
@@ -60,13 +60,13 @@ Return ONLY a JSON object with these exact fields:
 Use confidence "low" when portion size or ingredients are unclear, "medium" for a reasonable everyday estimate, and "high" only when the description includes clear quantities.`;
 
 const UNIT_REPLACEMENTS: Array<[RegExp, (value: number) => string]> = [
-  [/(\d+(?:\.\d+)?)\s*(?:кг\.?|килограмм(?:а|ов)?|kilograms?|kgs?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value * 1000)} g`],
-  [/(\d+(?:\.\d+)?)\s*(?:г\.?|гр\.?|грамм(?:а|ов)?|grams?|g\.?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} g`],
-  [/(\d+(?:\.\d+)?)\s*(?:мл\.?|миллилитр(?:а|ов)?|milliliters?|millilitres?|ml\.?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} ml`],
-  [/(\d+(?:\.\d+)?)\s*(?:л\.?|литр(?:а|ов)?|liters?|litres?|l\.?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} l`],
+  [/(\d+(?:\.\d+)?)\s*(?:кг\.?|килограмм(?:а|ов)?|кілограм(?:а|и|ів)?|kilograms?|kgs?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value * 1000)} g`],
+  [/(\d+(?:\.\d+)?)\s*(?:г\.?|гр\.?|грамм(?:а|ов)?|грам(?:а|и|ів)?|grams?|g\.?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} g`],
+  [/(\d+(?:\.\d+)?)\s*(?:мл\.?|миллилитр(?:а|ов)?|мілілітр(?:а|и|ів)?|milliliters?|millilitres?|ml\.?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} ml`],
+  [/(\d+(?:\.\d+)?)\s*(?:л\.?|литр(?:а|ов)?|літр(?:а|и|ів)?|liters?|litres?|l\.?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} l`],
   [/(\d+(?:\.\d+)?)\s*(?:шт\.?|штук(?:и)?|штуки?|pieces?|pcs?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} pcs`],
-  [/(\d+(?:\.\d+)?)\s*(?:ст\.?\s*л\.?|столов(?:ая|ые|ых)\s+лож(?:ка|ки|ек)|tbsp|tablespoons?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} tbsp`],
-  [/(\d+(?:\.\d+)?)\s*(?:ч\.?\s*л\.?|чай(?:ная|ные|ных)\s+лож(?:ка|ки|ек)|tsp|teaspoons?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} tsp`],
+  [/(\d+(?:\.\d+)?)\s*(?:ст\.?\s*л\.?|столов(?:ая|ые|ых)\s+лож(?:ка|ки|ек)|столов(?:а|і|их)\s+лож(?:ка|ки|ок)|tbsp|tablespoons?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} tbsp`],
+  [/(\d+(?:\.\d+)?)\s*(?:ч\.?\s*л\.?|чай(?:ная|ные|ных)\s+лож(?:ка|ки|ек)|чайн(?:а|і|их)\s+лож(?:ка|ки|ок)|tsp|teaspoons?)(?![\p{L}\p{N}_])/giu, (value) => `${formatQuantity(value)} tsp`],
 ];
 
 function formatQuantity(value: number): string {
@@ -80,7 +80,12 @@ function normalizeMealDescription(description: string): string {
     .replace(/(^|[^\p{L}\p{N}_])пол\s*(?:л\.?|литра|литр|l)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}0.5 l`)
     .replace(/(^|[^\p{L}\p{N}_])полкило(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}500 g`)
     .replace(/(^|[^\p{L}\p{N}_])половин[ау]\s+(?:кг\.?|килограмма|килограмм|kg)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}500 g`)
-    .replace(/(^|[^\p{L}\p{N}_])половин[ау]\s+(?:л\.?|литра|литр|l)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}0.5 l`);
+    .replace(/(^|[^\p{L}\p{N}_])половин[ау]\s+(?:л\.?|литра|литр|l)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}0.5 l`)
+    .replace(/(^|[^\p{L}\p{N}_])пів\s*(?:кг\.?|кілограма|кілограм|kg)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}500 g`)
+    .replace(/(^|[^\p{L}\p{N}_])пів\s*(?:л\.?|літра|літр|l)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}0.5 l`)
+    .replace(/(^|[^\p{L}\p{N}_])півкіло(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}500 g`)
+    .replace(/(^|[^\p{L}\p{N}_])половин[ау]\s+(?:кг\.?|кілограма|кілограм|kg)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}500 g`)
+    .replace(/(^|[^\p{L}\p{N}_])половин[ау]\s+(?:л\.?|літра|літр|l)(?![\p{L}\p{N}_])/giu, (_match, prefix) => `${prefix}0.5 l`);
 
   for (const [pattern, replacer] of UNIT_REPLACEMENTS) {
     normalized = normalized.replace(pattern, (_match, rawValue: string) => replacer(Number(rawValue)));

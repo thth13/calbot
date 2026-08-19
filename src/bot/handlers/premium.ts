@@ -24,7 +24,7 @@ function formatPremiumStatus(user?: Pick<IUser, 'premium'> | null): string {
   }
 
   const expiresAt = user?.premium?.expiresAt;
-  return expiresAt ? `\n\nYour Premium is active until ${expiresAt.toLocaleDateString('en-US')}.` : '\n\nYour Premium is active.';
+  return expiresAt ? `\n\nТвій Premium активний до ${expiresAt.toLocaleDateString('uk-UA')}.` : '\n\nТвій Premium активний.';
 }
 
 function buildPremiumUrl(ctx: Context): string {
@@ -43,7 +43,7 @@ function buildPremiumUrl(ctx: Context): string {
 
 export function buildPremiumKeyboard(ctx?: Context): InlineKeyboard {
   const webAppUrl = ctx ? buildPremiumUrl(ctx) : new URL('/premium', getWebAppUrl()).toString();
-  return new InlineKeyboard().webApp('Subscribe', webAppUrl);
+  return new InlineKeyboard().webApp('Оформити підписку', webAppUrl);
 }
 
 export async function handlePremium(ctx: Context): Promise<void> {
@@ -56,12 +56,12 @@ export async function handlePremium(ctx: Context): Promise<void> {
   await recordBotEvent(ctx, 'premium_offer_shown');
 
   await ctx.reply(
-    `💎 *Premium CalBot*\n\n` +
-      `• Unlimited scans\n` +
-      `• Extended nutrition stats\n\n` +
-      `Plans:\n` +
-      `• Monthly - *$9.99*\n` +
-      `• Yearly - *$99*${status}`,
+    `💎 *CalBot Premium*\n\n` +
+      `• Необмежені розпізнавання\n` +
+      `• Розширена статистика харчування\n\n` +
+      `Тарифи:\n` +
+      `• На місяць — *$9.99*\n` +
+      `• На рік — *$99*${status}`,
     { parse_mode: 'Markdown', reply_markup: buildPremiumKeyboard(ctx) }
   );
 }

@@ -6,14 +6,8 @@ import { NutritionTotals, sendGoalReachedNotification } from '../goalNotificatio
 import { recordBotEvent } from '../analytics.js';
 
 const MEAL_TYPE_LABELS: Record<MealType, string> = {
-  meal: '🍽 Meal',
-  snack: '🥨 Snack',
-};
-
-const CONFIDENCE_EMOJI: Record<string, string> = {
-  high: '✅',
-  medium: '⚠️',
-  low: '❓',
+  meal: '🍽 Прийом їжі',
+  snack: '🥨 Перекус',
 };
 
 const NUTRITION_FIELDS = ['calories', 'protein', 'carbs', 'fat'] as const;
@@ -54,13 +48,13 @@ export async function handleDeleteEntry(ctx: Context): Promise<void> {
 
   const entry = await FoodEntry.findOneAndDelete({ _id: entryId, telegramId });
   if (!entry) {
-    await ctx.answerCallbackQuery({ text: '❌ Entry not found', show_alert: true });
+    await ctx.answerCallbackQuery({ text: '❌ Запис не знайдено', show_alert: true });
     return;
   }
 
-  await ctx.answerCallbackQuery({ text: '✅ Entry deleted' });
+  await ctx.answerCallbackQuery({ text: '✅ Запис видалено' });
   await recordBotEvent(ctx, 'entry_deleted', { entryId });
-  await ctx.reply('🗑 Entry deleted. Stats updated.');
+  await ctx.reply('🗑 Запис видалено. Статистику оновлено.');
 }
 
 export async function handleEditEntryStart(ctx: Context): Promise<void> {
@@ -69,30 +63,30 @@ export async function handleEditEntryStart(ctx: Context): Promise<void> {
 
   const entry = await FoodEntry.findOne({ _id: entryId, telegramId: ctx.from.id });
   if (!entry) {
-    await ctx.answerCallbackQuery({ text: '❌ Entry not found', show_alert: true });
+    await ctx.answerCallbackQuery({ text: '❌ Запис не знайдено', show_alert: true });
     return;
   }
 
   editingState.set(ctx.from.id, { entryId: entryId as string });
 
   const keyboard = new InlineKeyboard()
-    .text('🔥 Calories', `edit_field_${entryId}_calories`)
-    .text('🥩 Protein', `edit_field_${entryId}_protein`)
+    .text('🔥 Калорії', `edit_field_${entryId}_calories`)
+    .text('🥩 Білки', `edit_field_${entryId}_protein`)
     .row()
-    .text('🍞 Carbs', `edit_field_${entryId}_carbs`)
-    .text('🧈 Fat', `edit_field_${entryId}_fat`)
+    .text('🍞 Вуглеводи', `edit_field_${entryId}_carbs`)
+    .text('🧈 Жири', `edit_field_${entryId}_fat`)
     .row()
-    .text('🥨 Meal type', `edit_meal_type_${entryId}`)
+    .text('🥨 Тип прийому їжі', `edit_meal_type_${entryId}`)
     .row()
-    .text('❌ Cancel', `cancel_edit_${entryId}`);
+    .text('❌ Скасувати', `cancel_edit_${entryId}`);
 
   await ctx.reply(
-    `✏️ *Edit entry*\n\n` +
+    `✏️ *Редагування запису*\n\n` +
       `${entry.foodDescription}\n` +
       `${MEAL_TYPE_LABELS[entry.mealType ?? 'meal']}\n` +
-      `🔥 ${formatNumber(entry.calories)} kcal\n` +
-      `🥩 ${formatNumber(entry.protein)}g  |  🍞 ${formatNumber(entry.carbs)}g  |  🧈 ${formatNumber(entry.fat)}g\n\n` +
-      `Choose what you want to change:`,
+      `🔥 ${formatNumber(entry.calories)} ккал\n` +
+      `🥩 ${formatNumber(entry.protein)} г  |  🍞 ${formatNumber(entry.carbs)} г  |  🧈 ${formatNumber(entry.fat)} г\n\n` +
+      `Обери, що хочеш змінити:`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 
@@ -102,7 +96,7 @@ export async function handleEditEntryStart(ctx: Context): Promise<void> {
 async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: number): Promise<void> {
   const entry = await FoodEntry.findOne({ _id: entryId, telegramId });
   if (!entry) {
-    await ctx.reply('❌ Entry not found');
+    await ctx.reply('❌ Запис не знайдено');
     return;
   }
 
@@ -118,20 +112,18 @@ async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: 
 
   const todayTotal = sumNutritionTotals(todayEntries).calories;
   const remaining = (user?.dailyCalorieGoal || 2000) - todayTotal;
-  const confidenceLabel = CONFIDENCE_EMOJI[entry.confidence] ?? '⚠️';
   const mealTypeLabel = MEAL_TYPE_LABELS[entry.mealType ?? 'meal'];
-  const keyboard = new InlineKeyboard().text('✏️ Edit', `edit_entry_${entry._id}`);
+  const keyboard = new InlineKeyboard().text('✏️ Редагувати', `edit_entry_${entry._id}`);
 
   await ctx.reply(
     `🍽 *${entry.foodDescription}*\n\n` +
       `${mealTypeLabel}\n` +
-      `🔥 Calories: *${formatNumber(entry.calories)} kcal*\n` +
-      `🥩 Protein: ${formatNumber(entry.protein)}g\n` +
-      `🍞 Carbs: ${formatNumber(entry.carbs)}g\n` +
-      `🧈 Fat: ${formatNumber(entry.fat)}g\n\n` +
-      `${confidenceLabel} Confidence: ${entry.confidence}\n\n` +
-      `📊 *Today total:* ${formatNumber(todayTotal)} kcal\n` +
-      `${remaining >= 0 ? `✅ Remaining: ${formatNumber(remaining)} kcal` : `⚠️ Over goal: ${formatNumber(Math.abs(remaining))} kcal`}`,
+      `🔥 Калорії: *${formatNumber(entry.calories)} ккал*\n` +
+      `🥩 Білки: ${formatNumber(entry.protein)} г\n` +
+      `🍞 Вуглеводи: ${formatNumber(entry.carbs)} г\n` +
+      `🧈 Жири: ${formatNumber(entry.fat)} г\n\n` +
+      `📊 *Усього сьогодні:* ${formatNumber(todayTotal)} ккал\n` +
+      `${remaining >= 0 ? `✅ Залишилося: ${formatNumber(remaining)} ккал` : `⚠️ Перевищення цілі: ${formatNumber(Math.abs(remaining))} ккал`}`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 }
@@ -145,7 +137,7 @@ export async function handleSelectEditField(ctx: Context): Promise<void> {
 
   const entry = ctx.from ? await FoodEntry.findOne({ _id: entryId, telegramId: ctx.from.id }) : null;
   if (!entry) {
-    await ctx.answerCallbackQuery({ text: '❌ Entry not found', show_alert: true });
+    await ctx.answerCallbackQuery({ text: '❌ Запис не знайдено', show_alert: true });
     return;
   }
 
@@ -154,13 +146,13 @@ export async function handleSelectEditField(ctx: Context): Promise<void> {
   }
 
   const labels = {
-    calories: '🔥 Calories (kcal)',
-    protein: '🥩 Protein (g)',
-    carbs: '🍞 Carbs (g)',
-    fat: '🧈 Fat (g)',
+    calories: '🔥 Калорії (ккал)',
+    protein: '🥩 Білки (г)',
+    carbs: '🍞 Вуглеводи (г)',
+    fat: '🧈 Жири (г)',
   };
 
-  await ctx.reply(`Enter a new value for ${labels[field as keyof typeof labels]}:`);
+  await ctx.reply(`Введи нове значення для «${labels[field as keyof typeof labels]}»:`);
   await ctx.answerCallbackQuery();
 }
 
@@ -170,17 +162,17 @@ export async function handleSelectMealType(ctx: Context): Promise<void> {
 
   const entry = await FoodEntry.findOne({ _id: entryId, telegramId: ctx.from.id });
   if (!entry) {
-    await ctx.answerCallbackQuery({ text: '❌ Entry not found', show_alert: true });
+    await ctx.answerCallbackQuery({ text: '❌ Запис не знайдено', show_alert: true });
     return;
   }
 
   const keyboard = new InlineKeyboard()
-    .text('🥨 Snack', `set_meal_type_${entryId}_snack`)
-    .text('🍽 Meal', `set_meal_type_${entryId}_meal`)
+    .text('🥨 Перекус', `set_meal_type_${entryId}_snack`)
+    .text('🍽 Прийом їжі', `set_meal_type_${entryId}_meal`)
     .row()
-    .text('❌ Cancel', `cancel_edit_${entryId}`);
+    .text('❌ Скасувати', `cancel_edit_${entryId}`);
 
-  await ctx.reply('Choose the meal type:', { reply_markup: keyboard });
+  await ctx.reply('Обери тип прийому їжі:', { reply_markup: keyboard });
   await ctx.answerCallbackQuery();
 }
 
@@ -194,7 +186,7 @@ export async function handleSetMealType(ctx: Context): Promise<void> {
 
   const entry = await FoodEntry.findOne({ _id: entryId, telegramId });
   if (!entry) {
-    await ctx.answerCallbackQuery({ text: '❌ Entry not found', show_alert: true });
+    await ctx.answerCallbackQuery({ text: '❌ Запис не знайдено', show_alert: true });
     return;
   }
 
@@ -202,7 +194,7 @@ export async function handleSetMealType(ctx: Context): Promise<void> {
   await entry.save();
   editingState.delete(telegramId);
 
-  await ctx.answerCallbackQuery({ text: '✅ Meal type updated' });
+  await ctx.answerCallbackQuery({ text: '✅ Тип прийому їжі оновлено' });
   await recordBotEvent(ctx, 'entry_edited', { entryId, field: 'mealType' });
   await replyWithEntrySummary(ctx, entryId, telegramId);
 }
@@ -216,14 +208,14 @@ export async function handleEditFieldValue(ctx: Context): Promise<boolean> {
 
   const value = parseFloat(ctx.message.text);
   if (isNaN(value) || value < 0) {
-    await ctx.reply('❌ Enter a valid number (>= 0)');
+    await ctx.reply('❌ Введи коректне число (≥ 0)');
     return true;
   }
 
   try {
     const entry = await FoodEntry.findOne({ _id: state.entryId, telegramId });
     if (!entry) {
-      await ctx.reply('❌ Entry not found');
+      await ctx.reply('❌ Запис не знайдено');
       editingState.delete(telegramId);
       return true;
     }
@@ -256,7 +248,7 @@ export async function handleEditFieldValue(ctx: Context): Promise<boolean> {
     return true;
   } catch (err) {
     console.error('Edit field error:', err);
-    await ctx.reply('❌ Error while saving');
+    await ctx.reply('❌ Помилка під час збереження');
     editingState.delete(telegramId);
     return true;
   }
@@ -267,5 +259,5 @@ export async function handleCancelEdit(ctx: Context): Promise<void> {
   if (telegramId) {
     editingState.delete(telegramId);
   }
-  await ctx.answerCallbackQuery({ text: '❌ Editing canceled' });
+  await ctx.answerCallbackQuery({ text: '❌ Редагування скасовано' });
 }

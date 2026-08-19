@@ -6,15 +6,9 @@ import { NutritionTotals, sendGoalReachedNotification } from '../goalNotificatio
 import { buildPremiumKeyboard, isPremiumActive } from './premium.js';
 import { recordBotEvent } from '../analytics.js';
 
-const CONFIDENCE_EMOJI: Record<string, string> = {
-  high: '✅',
-  medium: '⚠️',
-  low: '❓',
-};
-
 const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
-  meal: '🍽 Meal',
-  snack: '🥨 Snack',
+  meal: '🍽 Прийом їжі',
+  snack: '🥨 Перекус',
 };
 
 const DAILY_TOKEN_LIMIT = 30_000;
@@ -70,8 +64,8 @@ async function processMeal(
   const premiumActive = isPremiumActive(user);
   if (!premiumActive && !isFreeTrialActive(user)) {
     await ctx.reply(
-      '⛔ Your free 3-day trial has ended.\n\n' +
-        'Subscribe to keep scanning meals.',
+      '⛔ Твій безкоштовний 3-денний пробний період завершився.\n\n' +
+        'Оформи підписку, щоб продовжити розпізнавати страви.',
       { reply_markup: buildPremiumKeyboard(ctx) }
     );
     return;
@@ -79,8 +73,8 @@ async function processMeal(
 
   if (!premiumActive && user.dailyTokensUsed >= DAILY_TOKEN_LIMIT) {
     await ctx.reply(
-      "⛔ You've reached today's scan limit. Limits reset tomorrow.\n\n" +
-        '💎 Premium removes the daily limit and unlocks extended stats.'
+      '⛔ Ти досягнув ліміту розпізнавань на сьогодні. Ліміт оновиться завтра.\n\n' +
+        '💎 Premium знімає добовий ліміт і відкриває розширену статистику.'
     );
     return;
   }
@@ -91,7 +85,7 @@ async function processMeal(
   });
 
   if (premiumActive && todayEntriesCount >= PREMIUM_DAILY_ENTRY_LIMIT) {
-    await ctx.reply("⛔ You've reached the subscription limit: 100 entries per day. The limit resets tomorrow.");
+    await ctx.reply('⛔ Ти досягнув ліміту підписки: 100 записів на добу. Ліміт оновиться завтра.');
     return;
   }
 
@@ -151,22 +145,20 @@ async function processMeal(
     };
     const todayTotal = todayTotals.calories;
     const remaining = (user.dailyCalorieGoal || 2000) - todayTotal;
-    const confidenceLabel = CONFIDENCE_EMOJI[nutrition.confidence] ?? '⚠️';
     const mealTypeLabel = MEAL_TYPE_LABELS[nutrition.mealType];
-    const keyboard = new InlineKeyboard().text('✏️ Edit', `edit_entry_${entry._id}`);
+    const keyboard = new InlineKeyboard().text('✏️ Редагувати', `edit_entry_${entry._id}`);
 
     await ctx.api.deleteMessage(ctx.chat!.id, waitMsg.message_id);
 
     await ctx.reply(
       `🍽 *${nutrition.foodDescription}*\n\n` +
         `${mealTypeLabel}\n` +
-        `🔥 Calories: *${formatNumber(nutrition.calories)} kcal*\n` +
-        `🥩 Protein: ${formatNumber(nutrition.protein)}g\n` +
-        `🍞 Carbs: ${formatNumber(nutrition.carbs)}g\n` +
-        `🧈 Fat: ${formatNumber(nutrition.fat)}g\n\n` +
-        `${confidenceLabel} Confidence: ${nutrition.confidence}\n\n` +
-        `📊 *Today total:* ${formatNumber(todayTotal)} kcal\n` +
-        `${remaining >= 0 ? `✅ Remaining: ${formatNumber(remaining)} kcal` : `⚠️ Over goal: ${formatNumber(Math.abs(remaining))} kcal`}`,
+        `🔥 Калорії: *${formatNumber(nutrition.calories)} ккал*\n` +
+        `🥩 Білки: ${formatNumber(nutrition.protein)} г\n` +
+        `🍞 Вуглеводи: ${formatNumber(nutrition.carbs)} г\n` +
+        `🧈 Жири: ${formatNumber(nutrition.fat)} г\n\n` +
+        `📊 *Усього сьогодні:* ${formatNumber(todayTotal)} ккал\n` +
+        `${remaining >= 0 ? `✅ Залишилося: ${formatNumber(remaining)} ккал` : `⚠️ Перевищення цілі: ${formatNumber(Math.abs(remaining))} ккал`}`,
       { parse_mode: 'Markdown', reply_markup: keyboard }
     );
 
@@ -181,8 +173,8 @@ async function processMeal(
 async function processPhoto(ctx: Context, imageUrl: string, fileId: string, details?: string): Promise<void> {
   await processMeal(ctx, () => analyzeFood(imageUrl, details), {
     photoFileId: fileId,
-    waitText: '🔍 Analyzing food...',
-    failureText: '❌ Could not recognize the food. Try taking a clearer photo.',
+    waitText: '🔍 Аналізую їжу...',
+    failureText: '❌ Не вдалося розпізнати їжу. Спробуй зробити чіткіше фото.',
   });
 }
 
@@ -191,8 +183,8 @@ export async function handleFoodDescription(ctx: Context): Promise<void> {
   if (!ctx.from || !description) return;
 
   await processMeal(ctx, () => analyzeFoodDescription(description), {
-    waitText: '🔍 Calculating nutrition from the description...',
-    failureText: '❌ Could not calculate nutrition from the description. Try listing the foods and approximate portions.',
+    waitText: '🔍 Розраховую харчову цінність за описом...',
+    failureText: '❌ Не вдалося розрахувати харчову цінність за описом. Спробуй перерахувати продукти та приблизні порції.',
   });
 }
 
@@ -207,7 +199,7 @@ export async function handlePhoto(ctx: Context): Promise<void> {
   const file = await ctx.api.getFile(bestPhoto.file_id);
 
   if (!file.file_path) {
-    await ctx.reply('❌ Could not get the file. Try again.');
+    await ctx.reply('❌ Не вдалося отримати файл. Спробуй ще раз.');
     return;
   }
 

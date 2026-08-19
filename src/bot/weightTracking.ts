@@ -28,7 +28,7 @@ function parseBodyMeasurement(text: string): number | null {
 
 function isSkipText(text: string): boolean {
   const normalized = text.trim().toLowerCase();
-  return ['skip', 'пропустить', 'без изменений', 'no change', 'no changes', '-'].includes(normalized);
+  return ['пропустити', 'без змін', 'skip', 'пропустить', 'без изменений', 'no change', 'no changes', '-'].includes(normalized);
 }
 
 async function getTrackedBodyMeasurementTypes(telegramId: number): Promise<BodyMeasurementType[]> {
@@ -38,8 +38,8 @@ async function getTrackedBodyMeasurementTypes(telegramId: number): Promise<BodyM
 
 async function askNextBodyMeasurement(ctx: Context, type: BodyMeasurementType): Promise<void> {
   await ctx.reply(
-    `📏 Send ${BODY_MEASUREMENT_LABELS[type]} in centimeters, for example 72.5.\n` +
-      `If there are no changes, send "skip" or "пропустить".`
+    `📏 Надішли значення «${BODY_MEASUREMENT_LABELS[type]}» у сантиметрах, наприклад 72,5.\n` +
+      `Якщо змін немає, надішли «пропустити» або «без змін».`
   );
 }
 
@@ -81,7 +81,7 @@ export async function handleWeightUpdateMessage(ctx: Context): Promise<boolean> 
   const text = ctx.message?.text ?? '';
   const weight = parseWeight(text);
   if (weight === null) {
-    await ctx.reply('❌ Enter your current weight in kg as a number from 30 to 250. For example: 72.5');
+    await ctx.reply('❌ Введи поточну вагу в кілограмах числом від 30 до 250. Наприклад: 72,5');
     return true;
   }
 
@@ -100,14 +100,14 @@ export async function handleWeightUpdateMessage(ctx: Context): Promise<boolean> 
       }
     );
 
-    await ctx.reply(`✅ Weight saved: ${weight} kg.`);
+    await ctx.reply(`✅ Вагу збережено: ${weight} кг.`);
     await askNextBodyMeasurement(ctx, bodyMeasurementTypes[0]);
     return true;
   }
 
   await ctx.reply(
-    `✅ Weight saved: ${weight} kg.\n` +
-      `I will ask for the next weight update on ${nextWeightPromptAt.toLocaleDateString('en-US')}.`
+    `✅ Вагу збережено: ${weight} кг.\n` +
+      `Наступного разу я попрошу оновити вагу ${nextWeightPromptAt.toLocaleDateString('uk-UA')}.`
   );
   return true;
 }
@@ -143,7 +143,7 @@ export async function handleBodyMeasurementUpdateMessage(ctx: Context): Promise<
 
   if (!skipped && valueCm === null) {
     await ctx.reply(
-      `❌ Enter ${BODY_MEASUREMENT_LABELS[type]} in centimeters as a number from 1 to 300, or send "skip" / "пропустить".`
+      `❌ Введи значення «${BODY_MEASUREMENT_LABELS[type]}» у сантиметрах числом від 1 до 300 або надішли «пропустити» / «без змін».`
     );
     return true;
   }
@@ -178,9 +178,9 @@ export async function handleBodyMeasurementUpdateMessage(ctx: Context): Promise<
     }
   );
   await ctx.reply(
-    `✅ Weekly body measurements update is complete.` +
+    `✅ Щотижневе оновлення замірів тіла завершено.` +
       (user.nextWeightPromptAt
-        ? ` I will ask for the next update on ${user.nextWeightPromptAt.toLocaleDateString('en-US')}.`
+        ? ` Наступного разу я попрошу оновити дані ${user.nextWeightPromptAt.toLocaleDateString('uk-UA')}.`
         : '')
   );
   return true;
@@ -208,12 +208,12 @@ export function startWeeklyWeightPrompts(bot: Bot): WeeklyWeightPromptScheduler 
           const bodyMeasurementTypes = await getTrackedBodyMeasurementTypes(user.telegramId);
           const bodyMeasurementLine =
             bodyMeasurementTypes.length > 0
-              ? ' After weight, I will ask for your saved body measurements.'
+              ? ' Після ваги я попрошу оновити збережені заміри тіла.'
               : '';
 
           await bot.api.sendMessage(
             user.telegramId,
-            `⚖️ Time for your weekly weight check-in. Send your current weight in kg, for example: 72.5.${bodyMeasurementLine}`
+            `⚖️ Час для щотижневого контролю ваги. Надішли поточну вагу в кілограмах, наприклад: 72,5.${bodyMeasurementLine}`
           );
           await User.updateOne(
             { _id: user._id },

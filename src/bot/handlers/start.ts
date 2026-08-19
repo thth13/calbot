@@ -5,22 +5,24 @@ import { sendOnboardingGoalPrompt } from './goal.js';
 import { recordBotEvent } from '../analytics.js';
 
 export const mainKeyboard = new Keyboard()
-  .text('📅 Today').text('📊 Week')
+  .text('📅 Сьогодні').text('📊 Тиждень')
   .row()
-  .text('📋 History').text('👤 My Profile')
+  .text('📋 Історія').text('👤 Мій профіль')
   .resized();
 
 function buildInfoText(firstName?: string): string {
-  const greeting = firstName ? `👋 Hi, ${firstName}! I'm CalBot — your nutrition and calorie tracking assistant.` : `👋 Hi! I'm CalBot — your nutrition and calorie tracking assistant.`;
+  const greeting = firstName
+    ? `👋 Привіт, ${firstName}! Я CalBot — твій помічник з відстеження харчування та калорій.`
+    : `👋 Привіт! Я CalBot — твій помічник з відстеження харчування та калорій.`;
 
   return (
     greeting +
-    `\n\nYou can send:\n` +
-    `• a food photo — I'll estimate calories and nutritional value from the image (some inaccuracy is possible)\n` +
-    `• text — just write what you ate and how much: the more precise your description, the more accurate the estimate\n` +
-    `• a photo with a description — this is the most accurate option\n\n` +
-    `You get a free 3-day trial period to try CalBot.\n\n` +
-    `You don't have to describe everything in detail, but if you add what is on the plate and how much, the result will be more accurate.`
+    `\n\nМожеш надсилати:\n` +
+    `• фото їжі — я оціню калорійність і харчову цінність за зображенням (можлива неточність)\n` +
+    `• текст — просто напиши, що і скільки ти з'їв: що точніший опис, то точніша оцінка\n` +
+    `• фото з описом — це найточніший варіант\n\n` +
+    `Ти отримуєш безкоштовний 3-денний пробний період, щоб спробувати CalBot.\n\n` +
+    `Не обов'язково описувати все детально, але якщо додаси, що саме на тарілці та в якій кількості, результат буде точнішим.`
   );
 }
 
@@ -40,7 +42,7 @@ export async function handleStart(ctx: Context): Promise<void> {
   );
 
   await ctx.reply(
-    buildInfoText(tgUser.first_name) + `\n\nUse the buttons below to view your stats and profile.`,
+    buildInfoText(tgUser.first_name) + `\n\nСкористайся кнопками нижче, щоб переглянути статистику та профіль.`,
     { parse_mode: 'Markdown', reply_markup: mainKeyboard }
   );
 

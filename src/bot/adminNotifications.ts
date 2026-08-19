@@ -20,6 +20,19 @@ const DEFAULT_NOTIFICATION_EVENTS = new Set<BotEventType>([
 
 const IGNORED_USER_TELEGRAM_IDS = new Set([782328120, 1835555772]);
 
+const EVENT_LABELS: Record<BotEventType, string> = {
+  registration: 'реєстрація',
+  command: 'команда',
+  text_message: 'текстове повідомлення',
+  photo_message: 'фото',
+  callback_query: 'натискання кнопки',
+  meal_logged: 'прийом їжі записано',
+  entry_edited: 'запис відредаговано',
+  entry_deleted: 'запис видалено',
+  premium_offer_shown: 'показано пропозицію Premium',
+  premium_purchase_clicked: 'натиснуто купівлю Premium',
+};
+
 function getNotificationBotToken(): string | undefined {
   return process.env.ADMIN_NOTIFICATION_BOT_TOKEN;
 }
@@ -49,24 +62,24 @@ function shouldSendNotification(type: BotEventType): boolean {
 
 function formatUser(event: AdminNotification): string {
   const name = event.username ? `@${event.username}` : event.firstName;
-  return name ? `${name} (${event.telegramId ?? 'unknown'})` : String(event.telegramId ?? 'unknown');
+  return name ? `${name} (${event.telegramId ?? 'невідомо'})` : String(event.telegramId ?? 'невідомо');
 }
 
 function formatAdminNotification(event: AdminNotification): string {
-  const lines = [`CalBot event: ${event.type}`, `User: ${formatUser(event)}`];
+  const lines = [`Подія CalBot: ${EVENT_LABELS[event.type]}`, `Користувач: ${formatUser(event)}`];
 
   if (event.command) {
-    lines.push(`Command: /${event.command}`);
+    lines.push(`Команда: /${event.command}`);
   }
   if (event.callbackData) {
-    lines.push(`Callback: ${event.callbackData}`);
+    lines.push(`Зворотний виклик: ${event.callbackData}`);
   }
   if (event.metadata) {
     const details = Object.entries(event.metadata)
       .map(([key, value]) => `${key}: ${String(value)}`)
       .join(', ');
     if (details) {
-      lines.push(`Details: ${details}`);
+      lines.push(`Деталі: ${details}`);
     }
   }
 

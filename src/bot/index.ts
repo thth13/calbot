@@ -50,14 +50,20 @@ import { handleBodyMeasurementUpdateMessage, handleWeightUpdateMessage } from '.
 type TextCommandHandler = (ctx: Context) => Promise<void>;
 
 const TEXT_COMMAND_HANDLERS = new Map<string, TextCommandHandler>([
+  ['сьогодні', handleToday],
+  ['📅 сьогодні', handleToday],
   ['today', handleToday],
   ['сегодня', handleToday],
   ['📅 today', handleToday],
   ['📅 сегодня', handleToday],
+  ['тиждень', handleWeek],
+  ['📊 тиждень', handleWeek],
   ['week', handleWeek],
   ['неделя', handleWeek],
   ['📊 week', handleWeek],
   ['📊 неделя', handleWeek],
+  ['історія', handleHistory],
+  ['📋 історія', handleHistory],
   ['history', handleHistory],
   ['история', handleHistory],
   ['📋 history', handleHistory],
@@ -66,20 +72,29 @@ const TEXT_COMMAND_HANDLERS = new Map<string, TextCommandHandler>([
   ['statistics', handleToday],
   ['статистика', handleToday],
   ['📊 статистика', handleToday],
+  ['розширена статистика', handleExtendedStats],
+  ['📈 розширена статистика', handleExtendedStats],
   ['extended', handleExtendedStats],
   ['расширенная статистика', handleExtendedStats],
   ['📈 extended', handleExtendedStats],
   ['📈 расширенная статистика', handleExtendedStats],
+  ['мій профіль', handleGoal],
+  ['профіль', handleGoal],
+  ['👤 мій профіль', handleGoal],
   ['my profile', handleGoal],
   ['profile', handleGoal],
   ['профиль', handleGoal],
   ['мой профиль', handleGoal],
   ['👤 my profile', handleGoal],
   ['👤 мой профиль', handleGoal],
+  ['преміум', handlePremium],
+  ['💎 преміум', handlePremium],
   ['premium', handlePremium],
   ['премиум', handlePremium],
   ['💎 premium', handlePremium],
   ['💎 премиум', handlePremium],
+  ['інфо', handleInfo],
+  ['допомога', handleInfo],
   ['info', handleInfo],
   ['help', handleInfo],
   ['инфо', handleInfo],
@@ -104,12 +119,12 @@ export function createBot(token: string) {
   bot.command('info', handleInfo);
   bot.command('admin_stats', handleAdminStats);
 
-  bot.hears('📅 Today', handleToday);
-  bot.hears('📊 Week', handleWeek);
-  bot.hears('📋 History', handleHistory);
-  bot.hears('📈 Extended', handleExtendedStats);
-  bot.hears('👤 My Profile', handleGoal);
-  bot.hears('💎 Premium', handlePremium);
+  bot.hears('📅 Сьогодні', handleToday);
+  bot.hears('📊 Тиждень', handleWeek);
+  bot.hears('📋 Історія', handleHistory);
+  bot.hears('📈 Розширена', handleExtendedStats);
+  bot.hears('👤 Мій профіль', handleGoal);
+  bot.hears('💎 Преміум', handlePremium);
 
   // Wizard callbacks
   bot.callbackQuery('goal_calc', handleGoalCalcCallback);

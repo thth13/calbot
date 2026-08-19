@@ -10,8 +10,8 @@ import { User } from '../../db/models/User.js';
 export const bodyMeasurementInputState = new Map<number, BodyMeasurementType>();
 
 function formatMeasurementValue(value?: number, measuredAt?: Date): string {
-  if (value === undefined || !measuredAt) return 'not set';
-  return `${value} cm, ${measuredAt.toLocaleDateString('en-US')}`;
+  if (value === undefined || !measuredAt) return 'не встановлено';
+  return `${value} см, ${measuredAt.toLocaleDateString('uk-UA')}`;
 }
 
 function parseMeasurementValue(text: string): number | null {
@@ -31,7 +31,7 @@ function buildMeasurementsKeyboard(): InlineKeyboard {
     kb.row();
   }
 
-  return kb.text('⬅️ Back to profile', 'body_measurements_back');
+  return kb.text('⬅️ Назад до профілю', 'body_measurements_back');
 }
 
 async function getLatestMeasurements(telegramId: number): Promise<Map<BodyMeasurementType, { valueCm: number; measuredAt: Date }>> {
@@ -63,7 +63,7 @@ export async function handleBodyMeasurements(ctx: Context): Promise<void> {
     return `${BODY_MEASUREMENT_LABELS[type]}: ${formatMeasurementValue(latest?.valueCm, latest?.measuredAt)}`;
   });
 
-  await ctx.reply(`📏 *Body measurements*\n\n${lines.join('\n')}\n\nChoose a parameter to update:`, {
+  await ctx.reply(`📏 *Заміри тіла*\n\n${lines.join('\n')}\n\nОбери параметр для оновлення:`, {
     parse_mode: 'Markdown',
     reply_markup: buildMeasurementsKeyboard(),
   });
@@ -78,7 +78,7 @@ export async function handleBodyMeasurementSelectCallback(ctx: Context): Promise
 
   bodyMeasurementInputState.set(telegramId, type);
   await ctx.answerCallbackQuery();
-  await ctx.reply(`Enter ${BODY_MEASUREMENT_LABELS[type]} in centimeters. Example: 72.5`);
+  await ctx.reply(`Введи значення «${BODY_MEASUREMENT_LABELS[type]}» у сантиметрах. Наприклад: 72,5`);
 }
 
 export async function handleBodyMeasurementMessage(ctx: Context): Promise<boolean> {
@@ -90,7 +90,7 @@ export async function handleBodyMeasurementMessage(ctx: Context): Promise<boolea
 
   const valueCm = parseMeasurementValue(ctx.message?.text ?? '');
   if (valueCm === null) {
-    await ctx.reply('❌ Enter a measurement in centimeters as a number from 1 to 300. Example: 72.5');
+    await ctx.reply('❌ Введи замір у сантиметрах числом від 1 до 300. Наприклад: 72,5');
     return true;
   }
 
@@ -113,7 +113,7 @@ export async function handleBodyMeasurementMessage(ctx: Context): Promise<boolea
   });
 
   bodyMeasurementInputState.delete(telegramId);
-  await ctx.reply(`✅ Saved: ${BODY_MEASUREMENT_LABELS[type]} - ${valueCm} cm.`);
+  await ctx.reply(`✅ Збережено: ${BODY_MEASUREMENT_LABELS[type]} — ${valueCm} см.`);
   await handleBodyMeasurements(ctx);
   return true;
 }
