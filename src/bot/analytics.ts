@@ -1,5 +1,9 @@
 import type { Context, NextFunction } from 'grammy';
-import { BotEvent, BotEventType } from '../db/models/BotEvent.js';
+import {
+  BotEvent,
+  BotEventType,
+  PERSISTED_BOT_EVENT_TYPES,
+} from '../db/models/BotEvent.js';
 import { sendAdminNotification } from './adminNotifications.js';
 
 function getCommand(text?: string): string | undefined {
@@ -40,7 +44,9 @@ export async function recordBotEvent(
       metadata,
     };
 
-    await BotEvent.create(event);
+    if (PERSISTED_BOT_EVENT_TYPES.has(type)) {
+      await BotEvent.create(event);
+    }
     await sendAdminNotification(event);
   } catch (err) {
     console.error('Analytics event error:', err);

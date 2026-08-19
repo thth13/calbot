@@ -9,6 +9,7 @@ import {
   User,
 } from '../../db/models/User.js';
 import type { IUser } from '../../db/models/User.js';
+import { recordBotEvent } from '../analytics.js';
 import { getNextWeightPromptAt } from '../weightTracking.js';
 
 type WizardStep =
@@ -618,6 +619,11 @@ export async function handleGoalSaveCallback(ctx: Context): Promise<void> {
     },
     { upsert: true }
   );
+
+  await recordBotEvent(ctx, 'quiz_completed', {
+    goal: state.goal,
+    calories: state.result.targetCalories,
+  });
 
   wizardState.delete(telegramId);
   await ctx.answerCallbackQuery({ text: '✅ Ціль збережено' });

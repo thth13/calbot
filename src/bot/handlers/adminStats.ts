@@ -5,7 +5,8 @@ import { User } from '../../db/models/User.js';
 import { isAdmin } from '../analytics.js';
 
 const EVENT_LABELS: Record<string, string> = {
-  registration: 'реєстрація',
+  bot_started: 'запуск бота',
+  quiz_completed: 'опитування успішно завершено',
   command: 'команда',
   text_message: 'текстове повідомлення',
   photo_message: 'фото',

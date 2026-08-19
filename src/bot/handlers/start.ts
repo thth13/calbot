@@ -41,13 +41,14 @@ export async function handleStart(ctx: Context): Promise<void> {
     { upsert: true, new: true }
   );
 
+  await recordBotEvent(ctx, 'bot_started');
+
   await ctx.reply(
     buildInfoText(tgUser.first_name) + `\n\nСкористайся кнопками нижче, щоб переглянути статистику та профіль.`,
     { parse_mode: 'Markdown', reply_markup: mainKeyboard }
   );
 
   if (!existingUser) {
-    await recordBotEvent(ctx, 'registration');
     await sendOnboardingGoalPrompt(ctx);
   }
 }

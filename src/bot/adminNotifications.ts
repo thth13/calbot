@@ -12,7 +12,6 @@ interface AdminNotification {
 }
 
 const DEFAULT_NOTIFICATION_EVENTS = new Set<BotEventType>([
-  'registration',
   'meal_logged',
   'entry_edited',
   'entry_deleted',
@@ -21,7 +20,8 @@ const DEFAULT_NOTIFICATION_EVENTS = new Set<BotEventType>([
 const IGNORED_USER_TELEGRAM_IDS = new Set([782328120, 1835555772]);
 
 const EVENT_LABELS: Record<BotEventType, string> = {
-  registration: 'реєстрація',
+  bot_started: 'запуск бота',
+  quiz_completed: 'опитування успішно завершено',
   command: 'команда',
   text_message: 'текстове повідомлення',
   photo_message: 'фото',
