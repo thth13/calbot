@@ -13,7 +13,7 @@ const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
 
 const DAILY_TOKEN_LIMIT = 30_000;
 const PREMIUM_DAILY_ENTRY_LIMIT = 100;
-const FREE_TRIAL_DAYS = 3;
+const FREE_TRIAL_DAYS = 14;
 
 function getFreeTrialExpiresAt(user: { createdAt?: Date }): Date | undefined {
   if (!user.createdAt) {
@@ -64,7 +64,7 @@ async function processMeal(
   const premiumActive = isPremiumActive(user);
   if (!premiumActive && !isFreeTrialActive(user)) {
     await ctx.reply(
-      '⛔ Твій безкоштовний 3-денний пробний період завершився.\n\n' +
+      '⛔ Твій безкоштовний 14-денний пробний період завершився.\n\n' +
         'Оформи підписку, щоб продовжити розпізнавати страви.',
       { reply_markup: buildPremiumKeyboard(ctx) }
     );
