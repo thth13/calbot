@@ -3,8 +3,11 @@ import { Keyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
 import { sendOnboardingGoalPrompt } from './goal.js';
 import { recordBotEvent } from '../analytics.js';
+import { getWebAppUrl } from '../webApp.js';
 
 export const mainKeyboard = new Keyboard()
+  .webApp('📱 Відкрити застосунок', getWebAppUrl())
+  .row()
   .text('📅 Сьогодні').text('📊 Тиждень')
   .row()
   .text('📋 Історія').text('👤 Мій профіль')

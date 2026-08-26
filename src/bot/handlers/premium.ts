@@ -2,12 +2,7 @@ import { Context, InlineKeyboard } from 'grammy';
 import { User } from '../../db/models/User.js';
 import type { IUser } from '../../db/models/User.js';
 import { recordBotEvent } from '../analytics.js';
-
-const DEFAULT_WEBAPP_URL = 'https://calbot-web-self.vercel.app';
-
-function getWebAppUrl(): string {
-  return process.env.WEBAPP_URL ?? DEFAULT_WEBAPP_URL;
-}
+import { getWebAppUrl } from '../webApp.js';
 
 export function isPremiumActive(user?: Pick<IUser, 'premium'> | null): boolean {
   if (user?.premium?.active !== true) {

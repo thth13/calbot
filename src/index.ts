@@ -26,7 +26,12 @@ async function main() {
   process.once('SIGTERM', () => void shutdown('SIGTERM'));
 
   await bot.start({
-    onStart: (info) => console.log(`Bot @${info.username} started`),
+    onStart: async (info) => {
+      await bot.api.setChatMenuButton({
+        menu_button: { type: 'default' },
+      });
+      console.log(`Bot @${info.username} started`);
+    },
   });
 }
 
