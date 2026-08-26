@@ -3,6 +3,7 @@ import { Schema, model, Document } from 'mongoose';
 export type BotEventType =
   | 'bot_started'
   | 'quiz_completed'
+  | 'onboarding_skipped'
   | 'command'
   | 'text_message'
   | 'photo_message'
@@ -16,6 +17,7 @@ export type BotEventType =
 export const PERSISTED_BOT_EVENT_TYPES = new Set<BotEventType>([
   'bot_started',
   'quiz_completed',
+  'onboarding_skipped',
 ]);
 
 export interface IBotEvent extends Document {

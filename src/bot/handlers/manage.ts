@@ -111,7 +111,11 @@ async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: 
   ]);
 
   const todayTotal = sumNutritionTotals(todayEntries).calories;
-  const remaining = (user?.dailyCalorieGoal || 2000) - todayTotal;
+  const calorieGoalLine = user?.dailyCalorieGoal !== undefined
+    ? user.dailyCalorieGoal >= todayTotal
+      ? `✅ Залишилося: ${formatNumber(user.dailyCalorieGoal - todayTotal)} ккал`
+      : `⚠️ Перевищення цілі: ${formatNumber(todayTotal - user.dailyCalorieGoal)} ккал`
+    : `ℹ️ Ціль не встановлена`;
   const mealTypeLabel = MEAL_TYPE_LABELS[entry.mealType ?? 'meal'];
   const keyboard = new InlineKeyboard().text('✏️ Редагувати', `edit_entry_${entry._id}`);
 
@@ -123,7 +127,7 @@ async function replyWithEntrySummary(ctx: Context, entryId: string, telegramId: 
       `🍞 Вуглеводи: ${formatNumber(entry.carbs)} г\n` +
       `🧈 Жири: ${formatNumber(entry.fat)} г\n\n` +
       `📊 *Усього сьогодні:* ${formatNumber(todayTotal)} ккал\n` +
-      `${remaining >= 0 ? `✅ Залишилося: ${formatNumber(remaining)} ккал` : `⚠️ Перевищення цілі: ${formatNumber(Math.abs(remaining))} ккал`}`,
+      calorieGoalLine,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 }

@@ -374,7 +374,7 @@ async function showResult(ctx: Context, telegramId: number, state: WizardState):
   });
 }
 
-function buildGoalSelectionKeyboard(includeBodyMeasurements = true): InlineKeyboard {
+function buildGoalSelectionKeyboard(includeBodyMeasurements = true, includeSkip = false): InlineKeyboard {
   const kb = new InlineKeyboard()
     .text('📋 Пройти опитування', 'goal_calc')
     .row()
@@ -384,6 +384,10 @@ function buildGoalSelectionKeyboard(includeBodyMeasurements = true): InlineKeybo
     kb.row().text('📏 Заміри тіла', 'body_measurements');
   }
 
+  if (includeSkip) {
+    kb.row().text('⏭ Пропустити', 'goal_skip');
+  }
+
   return kb;
 }
 
@@ -391,7 +395,18 @@ export async function sendOnboardingGoalPrompt(ctx: Context): Promise<void> {
   await ctx.reply(
     `🎯 Встановімо твої щоденні цілі харчування.\n\n` +
       `Пройди коротке опитування, щоб я розрахував для тебе калорії та макронутрієнти, або введи цілі вручну.`,
-    { reply_markup: buildGoalSelectionKeyboard(false) }
+    { reply_markup: buildGoalSelectionKeyboard(false, true) }
+  );
+}
+
+export async function handleGoalSkipCallback(ctx: Context): Promise<void> {
+  const telegramId = ctx.from?.id;
+  if (telegramId) wizardState.delete(telegramId);
+
+  await ctx.answerCallbackQuery({ text: 'Онбординг пропущено' });
+  await recordBotEvent(ctx, 'onboarding_skipped');
+  await ctx.reply(
+    '⏭ Онбординг пропущено. Можеш користуватися ботом без цілі та встановити її пізніше в розділі «👤 Мій профіль».'
   );
 }
 
@@ -410,7 +425,7 @@ export async function sendGoalSetupPrompt(ctx: Context, user: IUser | null = nul
     : `Ціль не встановлена`;
 
   await ctx.reply(
-    `🎯 *Щоденна ціль за калоріями*\n\n${currentLine}${buildProfileInfo(user)}\n\nЗмінити ціль`,
+    `🎯 *Щоденна ціль за калоріями*\n\n${currentLine}${buildProfileInfo(user)}\n\nЗмінити ціль:`,
     { parse_mode: 'Markdown', reply_markup: buildGoalSelectionKeyboard() }
   );
 }
@@ -627,7 +642,7 @@ export async function handleGoalSaveCallback(ctx: Context): Promise<void> {
 
   wizardState.delete(telegramId);
   await ctx.answerCallbackQuery({ text: '✅ Ціль збережено' });
-  await ctx.reply('✅ Ціль збережено. Також я зберіг твою поточну вагу і раз на тиждень проситиму її оновити.');
+  await ctx.reply('✅ Ціль збережено. Можеш змінити її пізніше в розділі «👤 Мій профіль».');
 }
 
 export async function handleGoalChangeCallback(ctx: Context): Promise<void> {

@@ -144,7 +144,11 @@ async function processMeal(
       fat: todayTotals.fat - nutrition.fat,
     };
     const todayTotal = todayTotals.calories;
-    const remaining = (user.dailyCalorieGoal || 2000) - todayTotal;
+    const calorieGoalLine = user.dailyCalorieGoal !== undefined
+      ? user.dailyCalorieGoal >= todayTotal
+        ? `✅ Залишилося: ${formatNumber(user.dailyCalorieGoal - todayTotal)} ккал`
+        : `⚠️ Перевищення цілі: ${formatNumber(todayTotal - user.dailyCalorieGoal)} ккал`
+      : `ℹ️ Ціль не встановлена`;
     const mealTypeLabel = MEAL_TYPE_LABELS[nutrition.mealType];
     const keyboard = new InlineKeyboard().text('✏️ Редагувати', `edit_entry_${entry._id}`);
 
@@ -158,7 +162,7 @@ async function processMeal(
         `🍞 Вуглеводи: ${formatNumber(nutrition.carbs)} г\n` +
         `🧈 Жири: ${formatNumber(nutrition.fat)} г\n\n` +
         `📊 *Усього сьогодні:* ${formatNumber(todayTotal)} ккал\n` +
-        `${remaining >= 0 ? `✅ Залишилося: ${formatNumber(remaining)} ккал` : `⚠️ Перевищення цілі: ${formatNumber(Math.abs(remaining))} ккал`}`,
+        calorieGoalLine,
       { parse_mode: 'Markdown', reply_markup: keyboard }
     );
 

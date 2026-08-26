@@ -24,6 +24,7 @@ import {
   handleGoalManualCallback,
   handleGoalRestartCallback,
   handleGoalSaveCallback,
+  handleGoalSkipCallback,
   handleGoalTypeCallback,
   handleManualGoalCancelCallback,
   handleManualGoalFieldCallback,
@@ -131,6 +132,7 @@ export function createBot(token: string) {
   bot.callbackQuery('goal_back', handleGoalBackCallback);
   bot.callbackQuery('goal_cancel', handleGoalCancelCallback);
   bot.callbackQuery('goal_save', handleGoalSaveCallback);
+  bot.callbackQuery('goal_skip', handleGoalSkipCallback);
   bot.callbackQuery('goal_change', handleGoalChangeCallback);
   bot.callbackQuery('goal_restart', handleGoalRestartCallback);
   bot.callbackQuery('goal_explain', handleGoalExplainCallback);

@@ -25,7 +25,7 @@ export interface IUser extends Document {
     expiresAt?: Date;
     updatedAt?: Date;
   };
-  dailyCalorieGoal: number;
+  dailyCalorieGoal?: number;
   weight?: number;
   weightHistory: WeightEntry[];
   nextWeightPromptAt?: Date;
