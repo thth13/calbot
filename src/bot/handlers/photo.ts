@@ -13,7 +13,7 @@ const MEAL_TYPE_LABELS: Record<NutritionResult['mealType'], string> = {
 
 const DAILY_TOKEN_LIMIT = 30_000;
 const PREMIUM_DAILY_ENTRY_LIMIT = 100;
-const FREE_TRIAL_DAYS = 14;
+const FREE_TRIAL_DAYS = 7;
 
 function getFreeTrialExpiresAt(user: { createdAt?: Date }): Date | undefined {
   if (!user.createdAt) {
@@ -64,7 +64,7 @@ async function processMeal(
   const premiumActive = isPremiumActive(user);
   if (!premiumActive && !isFreeTrialActive(user)) {
     await ctx.reply(
-      '⛔ Your free 14-day trial has ended.\n\n' +
+      '⛔ Your free 7-day trial has ended.\n\n' +
         'Subscribe to continue recognizing meals.',
       { reply_markup: buildPremiumKeyboard(ctx) }
     );
