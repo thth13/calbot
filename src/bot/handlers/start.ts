@@ -21,7 +21,7 @@ function buildInfoText(firstName?: string): string {
   return (
     greeting +
     `\n\nSend a photo of your meal and optionally add a description. You can also send a description without a photo. For a more accurate estimate, include the ingredients and their weights in grams.\n\n` +
-    `You get a free 14-day trial of CalBot. After that, the price is UAH 200 per month.`
+    `You get a free 14-day trial of CalBot. After that, the price is $4.99 per month or $39.99 per year (USD).`
   );
 }
 
