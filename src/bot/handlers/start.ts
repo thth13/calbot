@@ -6,22 +6,22 @@ import { recordBotEvent } from '../analytics.js';
 import { getWebAppUrl } from '../webApp.js';
 
 export const mainKeyboard = new Keyboard()
-  .webApp('📱 Відкрити застосунок', getWebAppUrl())
+  .webApp('📱 Open app', getWebAppUrl())
   .row()
-  .text('📅 Сьогодні').text('📊 Тиждень')
+  .text('📅 Today').text('📊 Week')
   .row()
-  .text('📋 Історія').text('👤 Мій профіль')
+  .text('📋 History').text('👤 My profile')
   .resized();
 
 function buildInfoText(firstName?: string): string {
   const greeting = firstName
-    ? `👋 Привіт, ${firstName}! Я CalBot — твій помічник з відстеження харчування та калорій.`
-    : `👋 Привіт! Я CalBot — твій помічник з відстеження харчування та калорій.`;
+    ? `👋 Hi, ${firstName}! I am CalBot, your nutrition and calorie tracking assistant.`
+    : `👋 Hi! I am CalBot, your nutrition and calorie tracking assistant.`;
 
   return (
     greeting +
-    `\n\nПросто надішли сюди фото своєї страви та, за бажанням, додай опис. Також можеш надіслати лише опис без фото. Для точнішої оцінки вкажи, які інгредієнти та скільки грамів було додано.\n\n` +
-    `Ти отримуєш безкоштовний 14-денний пробний період, щоб спробувати CalBot. Після цього вартість становитиме 200 грн на місяць.`
+    `\n\nSend a photo of your meal and optionally add a description. You can also send a description without a photo. For a more accurate estimate, include the ingredients and their weights in grams.\n\n` +
+    `You get a free 14-day trial of CalBot. After that, the price is UAH 200 per month.`
   );
 }
 

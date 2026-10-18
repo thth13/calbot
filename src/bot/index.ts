@@ -76,6 +76,10 @@ const TEXT_COMMAND_HANDLERS = new Map<string, TextCommandHandler>([
   ['розширена статистика', handleExtendedStats],
   ['📈 розширена статистика', handleExtendedStats],
   ['extended', handleExtendedStats],
+  ['advanced', handleExtendedStats],
+  ['advanced statistics', handleExtendedStats],
+  ['📈 advanced', handleExtendedStats],
+  ['📈 розширена', handleExtendedStats],
   ['расширенная статистика', handleExtendedStats],
   ['📈 extended', handleExtendedStats],
   ['📈 расширенная статистика', handleExtendedStats],
@@ -120,12 +124,12 @@ export function createBot(token: string) {
   bot.command('info', handleInfo);
   bot.command('admin_stats', handleAdminStats);
 
-  bot.hears('📅 Сьогодні', handleToday);
-  bot.hears('📊 Тиждень', handleWeek);
-  bot.hears('📋 Історія', handleHistory);
-  bot.hears('📈 Розширена', handleExtendedStats);
-  bot.hears('👤 Мій профіль', handleGoal);
-  bot.hears('💎 Преміум', handlePremium);
+  bot.hears('📅 Today', handleToday);
+  bot.hears('📊 Week', handleWeek);
+  bot.hears('📋 History', handleHistory);
+  bot.hears('📈 Advanced', handleExtendedStats);
+  bot.hears('👤 My profile', handleGoal);
+  bot.hears('💎 Premium', handlePremium);
 
   // Wizard callbacks
   bot.callbackQuery('goal_calc', handleGoalCalcCallback);

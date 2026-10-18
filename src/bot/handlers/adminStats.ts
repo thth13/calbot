@@ -5,17 +5,17 @@ import { User } from '../../db/models/User.js';
 import { isAdmin } from '../analytics.js';
 
 const EVENT_LABELS: Record<string, string> = {
-  bot_started: 'запуск бота',
-  quiz_completed: 'опитування успішно завершено',
-  command: 'команда',
-  text_message: 'текстове повідомлення',
-  photo_message: 'фото',
-  callback_query: 'натискання кнопки',
-  meal_logged: 'прийом їжі записано',
-  entry_edited: 'запис відредаговано',
-  entry_deleted: 'запис видалено',
-  premium_offer_shown: 'показано пропозицію Premium',
-  premium_purchase_clicked: 'натиснуто купівлю Premium',
+  bot_started: 'bot started',
+  quiz_completed: 'questionnaire completed',
+  command: 'command',
+  text_message: 'text message',
+  photo_message: 'photo',
+  callback_query: 'button clicked',
+  meal_logged: 'meal logged',
+  entry_edited: 'entry edited',
+  entry_deleted: 'entry deleted',
+  premium_offer_shown: 'Premium offer shown',
+  premium_purchase_clicked: 'Premium purchase clicked',
 };
 
 function startOfToday(): Date {
@@ -36,7 +36,7 @@ async function countSince(model: { countDocuments: (filter: Record<string, unkno
 
 function formatEventCounts(counts: Array<{ _id: string; count: number }>): string {
   if (counts.length === 0) {
-    return 'Дій ще немає';
+    return 'No activity yet';
   }
 
   return counts.map((item) => `• ${EVENT_LABELS[item._id] ?? item._id}: ${item.count}`).join('\n');
@@ -44,7 +44,7 @@ function formatEventCounts(counts: Array<{ _id: string; count: number }>): strin
 
 export async function handleAdminStats(ctx: Context): Promise<void> {
   if (!isAdmin(ctx)) {
-    await ctx.reply('Доступ заборонено.');
+    await ctx.reply('Access denied.');
     return;
   }
 
@@ -93,31 +93,31 @@ export async function handleAdminStats(ctx: Context): Promise<void> {
       ? latestUsers
           .map((user) => {
             const name = user.username ? `@${user.username}` : user.firstName ?? String(user.telegramId);
-            return `• ${name} — ${user.createdAt.toLocaleString('uk-UA')}`;
+            return `• ${name} — ${user.createdAt.toLocaleString('en-GB')}`;
           })
           .join('\n')
-      : 'Користувачів ще немає';
+      : 'No users yet';
 
   await ctx.reply(
-    `Статистика адміністратора\n\n` +
-      `Користувачі\n` +
-      `• Усього: ${totalUsers}\n` +
-      `• Сьогодні: ${todayUsers}\n` +
-      `• За 7 днів: ${weekUsers}\n` +
-      `• За 30 днів: ${monthUsers}\n\n` +
-      `Записи про їжу\n` +
-      `• Усього: ${totalEntries}\n` +
-      `• Сьогодні: ${todayEntries}\n` +
-      `• За 7 днів: ${weekEntries}\n` +
-      `• За 30 днів: ${monthEntries}\n\n` +
-      `Дії\n` +
-      `• Сьогодні: ${todayActions}\n` +
-      `• За 7 днів: ${weekActions}\n` +
-      `• За 30 днів: ${monthActions}\n` +
-      `• Активні користувачі за 7 днів: ${activeUsers7d.length}\n\n` +
-      `Дії за типами за 7 днів\n` +
+    `Admin statistics\n\n` +
+      `Users\n` +
+      `• Total: ${totalUsers}\n` +
+      `• Today: ${todayUsers}\n` +
+      `• Last 7 days: ${weekUsers}\n` +
+      `• Last 30 days: ${monthUsers}\n\n` +
+      `Food entries\n` +
+      `• Total: ${totalEntries}\n` +
+      `• Today: ${todayEntries}\n` +
+      `• Last 7 days: ${weekEntries}\n` +
+      `• Last 30 days: ${monthEntries}\n\n` +
+      `Activity\n` +
+      `• Today: ${todayActions}\n` +
+      `• Last 7 days: ${weekActions}\n` +
+      `• Last 30 days: ${monthActions}\n` +
+      `• Active users in the last 7 days: ${activeUsers7d.length}\n\n` +
+      `Activity by type over the last 7 days\n` +
       `${formatEventCounts(actionCounts)}\n\n` +
-      `Останні реєстрації\n` +
+      `Latest registrations\n` +
       latestUsersText
   );
 }

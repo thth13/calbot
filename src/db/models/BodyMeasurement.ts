@@ -28,17 +28,17 @@ export const BODY_MEASUREMENT_TYPES: BodyMeasurementType[] = [
 ];
 
 export const BODY_MEASUREMENT_LABELS: Record<BodyMeasurementType, string> = {
-  waist: 'Талія',
-  abdomen: 'Живіт (на рівні пупка)',
-  chest: 'Груди',
-  hips_glutes: 'Стегна / сідниці',
-  neck: 'Шея',
-  shoulders: 'Плечи',
-  biceps_flexed: 'Біцепс (напружений)',
-  biceps_relaxed: 'Біцепс (розслаблений)',
-  forearm: 'Передпліччя',
-  thigh: 'Стегно',
-  calf: 'Литка',
+  waist: 'Waist',
+  abdomen: 'Abdomen (at navel)',
+  chest: 'Chest',
+  hips_glutes: 'Hips / glutes',
+  neck: 'Neck',
+  shoulders: 'Shoulders',
+  biceps_flexed: 'Biceps (flexed)',
+  biceps_relaxed: 'Biceps (relaxed)',
+  forearm: 'Forearm',
+  thigh: 'Thigh',
+  calf: 'Calf',
 };
 
 export interface IBodyMeasurement extends Document {

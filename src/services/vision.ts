@@ -15,6 +15,7 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const SYSTEM_PROMPT = `You are a nutrition expert. Estimate nutritional content and classify eating occasion type.
 Always respond with valid JSON only, no markdown, no extra text.
+Always write foodDescription in English, regardless of the language used by the user.
 Be realistic about portion sizes.
 If multiple dishes are present, sum everything up.`;
 
@@ -24,7 +25,7 @@ Classify the eating occasion:
 - "meal" if it looks like breakfast, lunch, dinner, a full plate, or a substantial combined dish.
 Return ONLY a JSON object with these exact fields:
 {
-  "foodDescription": "brief Ukrainian description of what you see",
+  "foodDescription": "brief English description of what you see",
   "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,
@@ -49,7 +50,7 @@ Do not replace explicit gram quantities with a "standard serving". If the user s
 If the user lists several products, calculate each product from its own quantity and sum the meal.
 Return ONLY a JSON object with these exact fields:
 {
-  "foodDescription": "brief normalized Ukrainian description of the meal",
+  "foodDescription": "brief normalized English description of the meal",
   "mealType": "meal" | "snack",
   "calories": <number>,
   "protein": <number in grams>,

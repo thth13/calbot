@@ -20,17 +20,17 @@ const DEFAULT_NOTIFICATION_EVENTS = new Set<BotEventType>([
 const IGNORED_USER_TELEGRAM_IDS = new Set([782328120, 1835555772]);
 
 const EVENT_LABELS: Record<BotEventType, string> = {
-  bot_started: 'запуск бота',
-  quiz_completed: 'опитування успішно завершено',
-  command: 'команда',
-  text_message: 'текстове повідомлення',
-  photo_message: 'фото',
-  callback_query: 'натискання кнопки',
-  meal_logged: 'прийом їжі записано',
-  entry_edited: 'запис відредаговано',
-  entry_deleted: 'запис видалено',
-  premium_offer_shown: 'показано пропозицію Premium',
-  premium_purchase_clicked: 'натиснуто купівлю Premium',
+  bot_started: 'bot started',
+  quiz_completed: 'questionnaire completed',
+  command: 'command',
+  text_message: 'text message',
+  photo_message: 'photo',
+  callback_query: 'button clicked',
+  meal_logged: 'meal logged',
+  entry_edited: 'entry edited',
+  entry_deleted: 'entry deleted',
+  premium_offer_shown: 'Premium offer shown',
+  premium_purchase_clicked: 'Premium purchase clicked',
 };
 
 function getNotificationBotToken(): string | undefined {
@@ -62,24 +62,24 @@ function shouldSendNotification(type: BotEventType): boolean {
 
 function formatUser(event: AdminNotification): string {
   const name = event.username ? `@${event.username}` : event.firstName;
-  return name ? `${name} (${event.telegramId ?? 'невідомо'})` : String(event.telegramId ?? 'невідомо');
+  return name ? `${name} (${event.telegramId ?? 'unknown'})` : String(event.telegramId ?? 'unknown');
 }
 
 function formatAdminNotification(event: AdminNotification): string {
-  const lines = [`Подія CalBot: ${EVENT_LABELS[event.type]}`, `Користувач: ${formatUser(event)}`];
+  const lines = [`CalBot event: ${EVENT_LABELS[event.type]}`, `User: ${formatUser(event)}`];
 
   if (event.command) {
-    lines.push(`Команда: /${event.command}`);
+    lines.push(`Command: /${event.command}`);
   }
   if (event.callbackData) {
-    lines.push(`Зворотний виклик: ${event.callbackData}`);
+    lines.push(`Callback: ${event.callbackData}`);
   }
   if (event.metadata) {
     const details = Object.entries(event.metadata)
       .map(([key, value]) => `${key}: ${String(value)}`)
       .join(', ');
     if (details) {
-      lines.push(`Деталі: ${details}`);
+      lines.push(`Details: ${details}`);
     }
   }
 
