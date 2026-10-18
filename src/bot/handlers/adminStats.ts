@@ -7,6 +7,7 @@ import { isAdmin } from '../analytics.js';
 const EVENT_LABELS: Record<string, string> = {
   bot_started: 'bot started',
   quiz_completed: 'questionnaire completed',
+  onboarding_skipped: 'setup skipped',
   command: 'command',
   text_message: 'text message',
   photo_message: 'photo',

@@ -22,6 +22,7 @@ const IGNORED_USER_TELEGRAM_IDS = new Set([782328120, 1835555772]);
 const EVENT_LABELS: Record<BotEventType, string> = {
   bot_started: 'bot started',
   quiz_completed: 'questionnaire completed',
+  onboarding_skipped: 'setup skipped',
   command: 'command',
   text_message: 'text message',
   photo_message: 'photo',
